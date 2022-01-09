@@ -46,3 +46,26 @@ sudo rm /etc/systemd/system/maestro.service
 sudo systemctl daemon-reload
 ```
 Then shut down and restart the pi.
+
+6. Additional pi setup
+```
+sudo apt-get update
+sudo apt-get install tmux -y
+touch ~/.tmux.conf
+echo "set -g mouse on" >> ~/.tmux.conf
+sudo apt install git
+```
+
+7. Get set up with github:
+- TODO: make a bot account, give it read-only access to this project!
+- Temp: generate short-term PAT to use for github credentials
+
+8. Clone this repo!
+```
+git clone https://github.com/hannahilea/FlipDotsPi.git
+cd FlipDotsPi
+mkdir tempscript
+cd tempscript
+```
+
+9. TODO set up julia!!
