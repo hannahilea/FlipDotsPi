@@ -56,16 +56,48 @@ echo "set -g mouse on" >> ~/.tmux.conf
 sudo apt install git
 ```
 
-7. Get set up with github:
+7. Set up Julia! (v1.5.3)
+From https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558 :
+```
+curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+sudo gpasswd -a $USER docker
+exit
+ssh pi@flipdots.local
+JL_VERSION=v1.5.3
+IMAGE_NAME=terasakisatoshi/jlcross:rpizero-${JL_VERSION}
+CONTAINER_NAME=jltmp_${JL_VERSION}
+docker run --name ${CONTAINER_NAME} $IMAGE_NAME /bin/bash
+docker cp ${CONTAINER_NAME}:/home/pi/julia-${JL_VERSION} .
+docker rm ${CONTAINER_NAME}
+sudo ln -s /home/pi/julia-1.5.3/bin/julia /usr/bin/julia
+
+sudo apt-get update && \
+    sudo apt-get install -y build-essential libatomic1 python gfortran perl wget m4 cmake pkg-config \
+    libopenblas-dev \
+    liblapack-dev \
+    libgmp3-dev \
+    libmpfr-dev
+```
+
+Then when running Julia for the first time, install package manager manually (why? not sure! failed otherwise):
+```
+rm -rf ~/.julia/registries/General
+julia
+using Pkg
+Pkg.Registry.add("General")
+```
+
+8. Get set up with github:
 - TODO: make a bot account, give it read-only access to this project!
 - Temp: generate short-term PAT to use for github credentials
+```
+git config credential.helper store
+```
 
-8. Clone this repo!
+9. Clone this repo!
 ```
 git clone https://github.com/hannahilea/FlipDotsPi.git
 cd FlipDotsPi
 mkdir tempscript
 cd tempscript
 ```
-
-9. TODO set up julia!!
