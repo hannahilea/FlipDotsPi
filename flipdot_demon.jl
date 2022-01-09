@@ -147,3 +147,7 @@ function display_message(message; loop::Bool=false)
 end
 
 display_message("HUZZAH -"; loop=false)
+
+function bytes_to_matrix(byte_array_message)
+    #TODO
+end

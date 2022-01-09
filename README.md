@@ -71,12 +71,19 @@ docker cp ${CONTAINER_NAME}:/home/pi/julia-${JL_VERSION} .
 docker rm ${CONTAINER_NAME}
 sudo ln -s /home/pi/julia-1.5.3/bin/julia /usr/bin/julia
 
+# Probably don't need these, but I added 'em before realizing that, and don't want to just remove 'em in case some already existed and are necessary.
 sudo apt-get update && \
     sudo apt-get install -y build-essential libatomic1 python gfortran perl wget m4 cmake pkg-config \
     libopenblas-dev \
     liblapack-dev \
     libgmp3-dev \
     libmpfr-dev
+```
+
+Then install the specific dependency we need to support LibSerialPort.jl:
+```
+sudo apt install libserialport0
+cp /user/lib/arm-linux-gnueabihf/libmbedtls* ~/.julia/packages/MbedTLS/a1JFn/deps/usr/lib
 ```
 
 Then when running Julia for the first time, install package manager manually (why? not sure! failed otherwise):
