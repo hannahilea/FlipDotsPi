@@ -1,13 +1,5 @@
 ## TODO
 
--make a repository
-    - share it with alex
-
-- update pi to default to jalapenowifi
-  - test it!
-- figure out how current init maestro script is being run
-    - tell it not to!
-
 - make basic julia display stuff (convert python to julia)
 
 - set up server for pi
@@ -17,9 +9,17 @@
 
 
 ## Work log
-
 ### Jan 8 2022
 
+- made a repo! (https://github.com/hannahilea/FlipDotsPi)
+
+- Poked around at install scripts:
+    - `cat maestro/install_maestro.sh`
+    - `cat maestro/install_autohotspot.sh`
+    - We probably want to disable the autohotspot? At least after we set up the wifi correctly...Actually it seems like maybe not, that's a good fallback if for whatever reason our private network is down (like it was when we started today).
+
+- Time to disable the run-on-start maestro! How do we do that?
+    - Thanks to the helpful https://www.thedigitalpictureframe.com/ultimate-guide-systemd-autostart-scripts-raspberry-pi/
 
 
 ### Jan 4 2022
