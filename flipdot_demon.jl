@@ -198,12 +198,12 @@ byte_array_message = make_message(msg)
 
 function bytes_to_matrix(byte_array_message)
     # byte_array_message = byte_array_message[4:end-1]
-    img = zeros(Int8, 7, 28)
+    img = zeros(Int8, 7, 28) #TODO now it only handles 28 size message
     for i_byte in 1:length(byte_array_message)
         byte = byte_array_message[i_byte]
         s = string(byte, base = 2)
         s = lpad(s, 7, '0')
-        @info s
+        # @info s
         for i_bit in 1:length(s)
             img[8-i_bit, i_byte] = parse(Int8, s[i_bit])
         end
@@ -212,3 +212,20 @@ function bytes_to_matrix(byte_array_message)
 end
 
 img = bytes_to_matrix(byte_array_message)
+
+function matrix_to_bytes(img)
+    byte_array_message  = Array{UInt8}(undef, size(img, 2))
+    for i_col = 1:size(img, 2)
+        column = img[:, i_col]
+        bit_string = join(column)
+        reversed = reverse(bit_string)
+        parsed = parse(Int, reversed, base=2)
+        byte_array_message[i_col] = UInt8(parsed)
+    end
+    return byte_array_message
+end
+
+msg = "HELLO"
+byte_array_message = make_message(msg)
+img = bytes_to_matrix(byte_array_message)
+test =  matrix_to_bytes(img)
