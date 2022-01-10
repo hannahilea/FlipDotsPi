@@ -148,6 +148,67 @@ end
 
 display_message("HUZZAH -"; loop=false)
 
-function bytes_to_matrix(byte_array_message)
-    #TODO
+#=
+all_bright = [
+    0x80,  # header
+    0x83,  # 28 bytes refresh
+    0xFF,  # address
+    0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, # 28 bytes data
+    0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
+    0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
+    0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
+    0x8F # EOT
+]
+=#
+
+
+striped = [
+    0x80,  # header
+    0x83,  # 28 bytes refresh
+    0xFF,  # address
+    0x7F, 0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F, # 28 bytes data
+    0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F, 0x00,
+    0x7F, 0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F, # 28 bytes data
+    0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F, 0x00,
+    0x8F # EOT
+]
+
+
+
+function make_message(message)
+    question = UInt8[]
+    for c in message
+        if c in keys(font)
+            append!(question, font[c])
+            append!(question, 0) # put space between letters
+        end
+    end
+
+    # if question is fewer than 28 columns pad it out with spaces
+    while length(question) < PANEL_WIDTH
+        append!(question, font[' '])
+    end
+    return question
 end
+
+msg = "HELLO"
+byte_array_message = make_message(msg)
+
+# byte_array_message = striped
+
+function bytes_to_matrix(byte_array_message)
+    # byte_array_message = byte_array_message[4:end-1]
+    img = zeros(Int8, 7, 28)
+    for i_byte in 1:length(byte_array_message)
+        byte = byte_array_message[i_byte]
+        s = string(byte, base = 2)
+        s = lpad(s, 7, '0')
+        @info s
+        for i_bit in 1:length(s)
+            img[8-i_bit, i_byte] = parse(Int8, s[i_bit])
+        end
+    end
+    return img
+end
+
+img = bytes_to_matrix(byte_array_message)
