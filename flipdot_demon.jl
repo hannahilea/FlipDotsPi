@@ -27,14 +27,16 @@
 
 using LibSerialPort
 
-SCROLL_PAUSE = 0.1
+SCROLL_PAUSE = 0.3
 PANEL_WIDTH = 28
 
-portname = "/dev/serial0"
+# portname = "/dev/serial0"
+portname = "/dev/ttyS0"
 baudrate = 57600
 
 font = Dict(
     ' ' => UInt8.([0]),
+    '!' => UInt8.([46]),
     '+' => UInt8.([24,  126, 126,  24,  0]),
     '-' => UInt8.([24,   24,  24,  24,  0]),
     '0' => UInt8.([62,   65,  65,  62,  0]),
@@ -104,8 +106,9 @@ function show_slice(t, srl, question)
         0xFF, # panel address
     ]
 
-    for i in t:(t + 28) # 28 bytes data
-        append!(transmission, question[i % length(question)])
+    foreach(t:(t + 27)) do i
+        x = (i % length(question)) + 1
+        append!(transmission, question[x])
     end
 
     append!(transmission, 0x8F) # EOT
@@ -134,20 +137,16 @@ function display_message(message; loop::Bool=false)
         write(srl, all_dark)
         sleep(0.5)
 
-        while t <= length(question)
+        @info "why" length(question) length(message)
+        while t < length(question) + 1
             show_slice(t, srl, question)
             sleep(SCROLL_PAUSE)
             t += 1
             if loop
-                t > length(question) && (t = 1)
+                t >= length(question) && (t = 1)
             end
-            loop += 1
         end
     end
 end
 
-display_message("HUZZAH -"; loop=false)
-
-function bytes_to_matrix(byte_array_message)
-    #TODO
-end
+display_message("HUZZAH !"; loop=false)
