@@ -1,6 +1,7 @@
 ## TODO
 
-- make basic julia display stuff (convert python to julia)
+- [ ] Update readme for now-working changelog instructions!
+  - remove installation cruft from old attempts
 
 - set up server for pi
   - install julia on pi
@@ -9,6 +10,62 @@
 
 
 ## Work log
+
+### Jan 13 2022
+Trying to build libserialport manually (instructions here: https://github.com/sigrokproject/libserialport):
+
+1. remove old one:
+```
+sudo apt-get remomve libserialport-dev
+sudo apt-get remomve libserialport0
+```
+verify nothing:
+```
+apt list --installed | grep libserialport
+```
+
+2. build new one
+```
+sudo apt-get install autoconf
+sudo apt-get install libtool
+
+git clone https://github.com/sigrokproject/libserialport.git
+./autogen.sh
+./configure
+make
+sudo make install
+```
+confirm existance:
+```
+ls /usr/local/lib/
+```
+
+3. Copy it over:
+```
+sudo cp /usr/local/lib/libserialport* ~/.julia/artifacts/3b640a4f5595d49c1a13088bb157b3098a0c3d82/lib
+```
+confirm:
+```
+ls ~/.julia/artifacts/3b640a4f5595d49c1a13088bb157b3098a0c3d82/lib
+```
+4. Try it:
+```julia
+using LibSerialPort
+srl = LibSerialPort.open("/dev/ttyS0", 57600; mode=SP_MODE_WRITE)
+
+#note: using /dev/serial0 fails?!? still?!? dunno why.
+
+```
+
+### Jan 9 2022
+- Spent a lot of time trying to figure out how to get LibSerialPort deps running. Maybe succeeded? Instructions are now up to date; lots of thanks to https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558/22
+
+- Looks like our serial port isn't enabled by default; must have been previously set up by maestro? Trying to figure out how to set that up.
+    - For future: in maestro/displayConfig.yml, option to uncomment type to make it different type of screen
+
+- After a bunch of mucking around, unable to make LibSerialPorts.jl work, reran the old python script as a sanity-check. It worked. -__- Giving up on LibSerialPorts, moving to SerialPorts.jl (which wraps the python library).
+- For future reference, to get the
+
 ### Jan 8 2022
 
 - made a repo! (https://github.com/hannahilea/FlipDotsPi)
@@ -21,6 +78,7 @@
 - Time to disable the run-on-start maestro! How do we do that?
     - Thanks to the helpful https://www.thedigitalpictureframe.com/ultimate-guide-systemd-autostart-scripts-raspberry-pi/
 
+- Spent a lot of time trying to figure out how to get LibSerialPort deps running. Did not succeed. Instructions are now up to date; lots of thanks to https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558/22
 
 ### Jan 4 2022
 

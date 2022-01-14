@@ -54,7 +54,11 @@ sudo apt-get install tmux -y
 touch ~/.tmux.conf
 echo "set -g mouse on" >> ~/.tmux.conf
 sudo apt install git
+
+sudo usermod -a -G dialout pi
+sudo reboot
 ```
+...then wait for the pi to reboot and re-ssh on!
 
 7. Set up Julia! (v1.5.3)
 From https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558 :
@@ -80,13 +84,19 @@ sudo apt-get update && \
     libmpfr-dev
 ```
 
-Then install the specific dependency we need to support LibSerialPort.jl:
+8. Then install the specific dependency we need to support LibSerialPort.jl:
 ```
-sudo apt install libserialport0
-cp /user/lib/arm-linux-gnueabihf/libmbedtls* ~/.julia/packages/MbedTLS/a1JFn/deps/usr/lib
+sudo apt-get install libserialport-dev -y
+
+sudo cp /usr/lib/arm-linux-gnueabihf/libserialport* ~/.julia/artifacts/3b640a4f5595d49c1a13088bb157b3098a0c3d82/lib
+
+# Note: In the following paths, <...> will be something like <mafu1>; it's the only subdir of `libserialport_jll`
+mkdir -p ~/.julia/packages/libserialport_jll/<...>/deps/usr/lib
+cp /usr/lib/arm-linux-gnueabihf/libserialport* ~/.julia/packages/libserialport_jll/<...>/deps/usr/lib
+chmod 777 ~/.julia/artifacts/3b640a4f5595d49c1a13088bb157b3098a0c3d82/lib/*
 ```
 
-Then when running Julia for the first time, install package manager manually (why? not sure! failed otherwise):
+9. When running Julia for the first time, install package manager manually (why? not sure! failed otherwise):
 ```
 rm -rf ~/.julia/registries/General
 julia
@@ -94,14 +104,14 @@ using Pkg
 Pkg.Registry.add("General")
 ```
 
-8. Get set up with github:
+10. Get set up with github:
 - TODO: make a bot account, give it read-only access to this project!
 - Temp: generate short-term PAT to use for github credentials
 ```
 git config credential.helper store
 ```
 
-9. Clone this repo!
+11. Clone this repo!
 ```
 git clone https://github.com/hannahilea/FlipDotsPi.git
 cd FlipDotsPi
