@@ -26,6 +26,7 @@
 ### 0x8F end
 
 using LibSerialPort
+using ArgParse
 
 SCROLL_PAUSE = 0.3
 PANEL_WIDTH = 28
@@ -115,6 +116,7 @@ function show_slice(t, srl, question)
     write(srl, transmission)
 end
 
+#TODO fix looping (both logic and ncount)
 function display_message(message; loop::Bool=false)
     # loop over question string and add columns to question
     question = UInt8[]
@@ -149,4 +151,40 @@ function display_message(message; loop::Bool=false)
     end
 end
 
-display_message("HUZZAH !"; loop=false)
+#####
+## IFF running from the REPL
+#####
+
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "--loopcount"
+            help = "Number of times to loop the message"
+            arg_type = Int
+            default = 1
+        "--baudrate"
+            help = "Baudrate of the display"
+            arg_type = Int
+            default = 57600
+        "--portname"
+            help = "Serial port name for the display"
+            arg_type = String
+            default = "/dev/ttyS0"
+        "message"
+            help = "Message to be displayed; supports uppercase letters, numbers, and limited symbols." #TODO list symbols
+            required = true
+    end
+    return parse_args(s)
+end
+
+if !isinteractive()
+    parsed_args = parse_commandline()
+    println("Parsed args:")
+    for (arg,val) in parsed_args
+        println("  $arg  =>  $val")
+    end
+    #TODO: set up srl, etc; use options
+    println("WOULD DISPLAY MESSAGE: $()")
+    display_message(parsed_args["message"]; loop=false)
+end
