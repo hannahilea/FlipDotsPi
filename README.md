@@ -133,7 +133,7 @@ This will then display the message `FLIP FLIP HOORAY!!!`.
 
 Additional configuration options are available through this command line interface; to see them, do
 ```
-julia --project=. fliptdot_message.jl --help
+julia --project=. flipdot_message.jl --help
 ```
 
 Alternatively, if you want to play around and don't want to deal with the precompilation overhead for each message, use the REPL: `julia --project=.`

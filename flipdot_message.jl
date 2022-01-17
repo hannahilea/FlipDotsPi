@@ -156,7 +156,7 @@ end
 #####
 
 function parse_commandline()
-    s = ArgParseSettings()
+    s = ArgParseSettings(; description="Scroll a message on a FlipDots display.")
 
     @add_arg_table s begin
         "--loopcount"
@@ -181,10 +181,9 @@ end
 if !isinteractive()
     parsed_args = parse_commandline()
     println("Parsed args:")
-    for (arg,val) in parsed_args
+    for (arg, val) in parsed_args
         println("  $arg  =>  $val")
     end
     #TODO: set up srl, etc; use options
-    println("WOULD DISPLAY MESSAGE: $()")
     display_message(parsed_args["message"]; loop=false)
 end
