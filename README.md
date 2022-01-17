@@ -1,6 +1,8 @@
 # FlipDotsPi
 
-A RaspberryPi server for an AlphaZeta FlipDots display.
+A RaspberryPi server for an [AlphaZeta FlipDots](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) display.
+
+### Pi set up
 
 ## Normal pi accesss once one-time setup complete
 
@@ -117,4 +119,28 @@ git clone https://github.com/hannahilea/FlipDotsPi.git
 cd FlipDotsPi
 mkdir tempscript
 cd tempscript
+```
+
+### Displaying messages
+
+Currently there are two options for running the : command line and REPL.
+
+To display a one-time message on the pi, do
+```
+julia --project=. fliptdot_message.jl "FLIP FLIP HOORAY!!!"
+```
+This will then display the message `FLIP FLIP HOORAY!!!`.
+
+Additional configuration options are available through this command line interface; to see them, do
+```
+julia --project=. fliptdot_message.jl --help
+```
+
+Alternatively, if you want to play around and don't want to deal with the precompilation overhead for each message, use the REPL: `julia --project=.`
+
+```julia
+include("flipdot_message.jl")
+display_message("HUZZAH!")
+display_message("O_o")
+display_message("YAY!")
 ```
