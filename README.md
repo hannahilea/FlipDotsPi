@@ -172,9 +172,9 @@ Alternatively, if you want to play around with displaying multiple messages and 
 Then do:
 ```julia
 include("scroll_message.jl")
-display_message("HUZZAH!")
-display_message("O_o")
-display_message("YAY!")
+scroll_message("HUZZAH!")
+scroll_message("O_o")
+scroll_message("YAY!")
 ```
 
 ### FAQ
