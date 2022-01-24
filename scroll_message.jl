@@ -100,18 +100,21 @@ all_dark = [
     0x8F # EOT
 ]
 
-function show_slice(t, srl, question)
+function show_slice(t, srl, msg; wrap_msg=false)
     transmission = [
         0x80, #header
         0x83, # 28 bytes, refresh
         0xFF, # panel address
     ]
-
-    foreach(t:(t + 27)) do i
-        x = (i % length(question)) + 1
-        append!(transmission, question[x])
+    for i in t:(t + 27)
+        if i <= length(msg)
+            append!(transmission, msg[i])
+        elseif wrap_msg
+            append!(transmission, msg[i % length(msg)])
+        else
+            append!(transmission, 0x00)
+        end
     end
-
     append!(transmission, 0x8F) # EOT
     write(srl, transmission)
 end
@@ -133,25 +136,30 @@ function construct_question(message; panel_width)
     return question
 end
 
-#TODO fix looping (both logic and ncount)
-function scroll_message(message; loopcount::Int=DEFAULT_LOOPCOUNT, baudrate::Int=DEFAULT_BAUDRATE,
-                        portname::AbstractString=DEFAULT_PORTNAME, scrollpause=DEFAULT_SCROLLPAUSE,
+function flash_display(srl, sleep_sec=0.5)
+    write(srl, all_bright)
+    sleep(sleep_sec)
+    write(srl, all_dark)
+    sleep(sleep_sec)
+    return nothing
+end
+
+function scroll_message(message; loopcount::Int=DEFAULT_LOOPCOUNT, baudrate=DEFAULT_BAUDRATE,
+                        portname=DEFAULT_PORTNAME, scrollpause=DEFAULT_SCROLLPAUSE,
                         panel_width=DEFAULT_PANEL_WIDTH, verbose=false)
     question = construct_question(message; panel_width)
     verbose && println("Msg to display: $question")
     LibSerialPort.open(portname, baudrate) do srl
-        write(srl, all_bright)
-        sleep(0.5)
-        write(srl, all_dark)
-        sleep(0.5)
+        verbose && println("Attempting display flasth")
+        flash_display(srl)
+        verbose && println("Displaying message")
 
-        verbose && (@info "why" length(question) length(message))
-        t = 1
-        while t < ((length(question) + 1) * loopcount)
-            show_slice(t, srl, question)
-            sleep(scrollpause)
-            t += 1
-            t >= length(question) && (t = 1)
+        for i in 1:loopcount
+            wrap_msg = i != loopcount
+            for t in 1:length(question)
+                show_slice(t, srl, question; wrap_msg)
+                sleep(scrollpause)
+            end
         end
     end
 end
