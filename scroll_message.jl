@@ -28,12 +28,12 @@
 using LibSerialPort
 using ArgParse
 
-SCROLL_PAUSE = 0.3
-PANEL_WIDTH = 28
+const DEFAULT_PANEL_WIDTH = 28
 
-# portname = "/dev/serial0"
-portname = "/dev/ttyS0"
-baudrate = 57600
+const DEFAULT_PORTNAME = "/dev/ttyS0"  # "/dev/serial0"
+const DEFAULT_BAUDRATE = 57600
+const DEFAULT_LOOPCOUNT = 1
+const DEFAULT_SCROLLPAUSE = 0.3f0
 
 font = Dict(
     ' ' => UInt8.([0]),
@@ -116,8 +116,7 @@ function show_slice(t, srl, question)
     write(srl, transmission)
 end
 
-#TODO fix looping (both logic and ncount)
-function scroll_message(message; loop::Bool=false)
+function construct_question(message; panel_width)
     # loop over question string and add columns to question
     question = UInt8[]
     for c in message
@@ -128,11 +127,17 @@ function scroll_message(message; loop::Bool=false)
     end
 
     # if question is fewer than 28 columns pad it out with spaces
-    while length(question) < PANEL_WIDTH
+    while length(question) < panel_width
         append!(question, font[' '])
     end
+    return question
+end
 
-    t = 1
+#TODO fix looping (both logic and ncount)
+function scroll_message(message; loopcount::Int=DEFAULT_LOOPCOUNT, baudrate::Int=DEFAULT_BAUDRATE,
+                        portname::AbstractString=DEFAULT_PORTNAME, scrollpause=DEFAULT_SCROLLPAUSE,
+                        panel_width=DEFAULT_PANEL_WIDTH)
+    question = construct_question(message; panel_width)
     LibSerialPort.open(portname, baudrate) do srl
         write(srl, all_bright)
         sleep(0.5)
@@ -140,13 +145,12 @@ function scroll_message(message; loop::Bool=false)
         sleep(0.5)
 
         @info "why" length(question) length(message)
-        while t < length(question) + 1
+        t = 1
+        while t < ((length(question) + 1) * loopcount)
             show_slice(t, srl, question)
-            sleep(SCROLL_PAUSE)
+            sleep(scrollpause)
             t += 1
-            if loop
-                t >= length(question) && (t = 1)
-            end
+            t >= length(question) && (t = 1)
         end
     end
 end
@@ -157,20 +161,30 @@ end
 
 function parse_commandline()
     s = ArgParseSettings(; description="Scroll a message on a FlipDots display.")
-
     @add_arg_table s begin
         "--loopcount"
-            help = "Number of times to loop the message"
+            help = "Number of times to scroll the message"
             arg_type = Int
-            default = 1
+            default = DEFAULT_LOOPCOUNT
         "--baudrate"
             help = "Baudrate of the display"
             arg_type = Int
-            default = 57600
+            default = DEFAULT_BAUDRATE
         "--portname"
             help = "Serial port name for the display"
             arg_type = String
-            default = "/dev/ttyS0"
+            default = DEFAULT_PORTNAME
+        "--scrollpause"
+            help = "Pause between scroll updates (sec)"
+            arg_type = Float32
+            default = DEFAULT_SCROLLPAUSE
+        "--panelwidth"
+            help = "Width of the display (# dots)"
+            arg_type = Int
+            default = DEFAULT_PANEL_WIDTH
+        "--verbose"
+            help = "Show additional debug statements"
+            action = :store_true
         "message"
             help = "Message to be displayed; supports uppercase letters, numbers, and limited symbols." #TODO list symbols
             required = true
@@ -178,12 +192,14 @@ function parse_commandline()
     return parse_args(s)
 end
 
+# ...when running as script (not from REPL):
 if !isinteractive()
-    parsed_args = parse_commandline()
-    @debug  println("Parsed args:")
-    for (arg, val) in parsed_args
-        @debug println("  $arg  =>  $val")
+    d = parse_commandline()
+    args = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
+    if args.verbose
+        println("Parsed args:")
+        map((a, v) -> println("  $arg  =>  $val"), args)
     end
-    #TODO: set up srl, etc; use options
-   # scroll_message(parsed_args["message"]; loop=false)
+    scroll_message(args["message"]; args.loopcount, args.baudrate, args.portname,
+                   args.scrollpause, args.verbose, panel_width=args.panelwidth)
 end
