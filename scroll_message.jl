@@ -136,15 +136,16 @@ end
 #TODO fix looping (both logic and ncount)
 function scroll_message(message; loopcount::Int=DEFAULT_LOOPCOUNT, baudrate::Int=DEFAULT_BAUDRATE,
                         portname::AbstractString=DEFAULT_PORTNAME, scrollpause=DEFAULT_SCROLLPAUSE,
-                        panel_width=DEFAULT_PANEL_WIDTH)
+                        panel_width=DEFAULT_PANEL_WIDTH, verbose=false)
     question = construct_question(message; panel_width)
+    verbose && println("Msg to display: $question")
     LibSerialPort.open(portname, baudrate) do srl
         write(srl, all_bright)
         sleep(0.5)
         write(srl, all_dark)
         sleep(0.5)
 
-        @info "why" length(question) length(message)
+        verbose && (@info "why" length(question) length(message))
         t = 1
         while t < ((length(question) + 1) * loopcount)
             show_slice(t, srl, question)
@@ -196,10 +197,8 @@ end
 if !isinteractive()
     d = parse_commandline()
     args = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
-    if args.verbose
-        println("Parsed args:")
-        map((a, v) -> println("  $arg  =>  $val"), args)
-    end
-    scroll_message(args["message"]; args.loopcount, args.baudrate, args.portname,
-                   args.scrollpause, args.verbose, panel_width=args.panelwidth)
+    args.verbose && println("Parsed args: $args")
+    scroll_message(args.message; loopcount=args.loopcount, baudrate=args.baudrate,
+                   portname=args.portname, scrollpause=args.scrollpause, verbose=args.verbose,
+                   panel_width=args.panelwidth)
 end
