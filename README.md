@@ -2,12 +2,12 @@
 
 WIP. A RaspberryPi server (in Julia) for an [AlphaZeta flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) display.
 
-Currently: scroll a single message on a flip dot board.
-Future: set up a server on the pi to handles incoming messages.
+_Current:_ Scroll a single message on a flip dot board.
+_Future:_ Set up a server on the pi to handle incoming messages.
 
 ## Set up
 
-These instructions are for a Raspberry Pi Zero; ymmv on any other board.
+These instructions are for a Raspberry Pi Zero for a 7x28 AlphaZeta display; ymmv on any other controller with any other display.
 
 ### Disable auto-running Maestro service
 
@@ -45,14 +45,13 @@ sudo reboot
 ```
 
 ### Install Julia on Raspberry Pi Zero
-Install Julia (v1.5.3)!
+With many thanks to [@terasakisatoshi](https://discourse.julialang.org/u/terasakisatoshi), via [these instructions](https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558),:
 
-1. With many thanks to @terasakisatoshi (via https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558):
+1. On the Pi, do
 ```
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 sudo gpasswd -a $USER docker
-exit
-ssh pi@flipdots.local
+sudo reboot
 JL_VERSION=v1.5.3
 IMAGE_NAME=terasakisatoshi/jlcross:rpizero-${JL_VERSION}
 CONTAINER_NAME=jltmp_${JL_VERSION}
@@ -62,10 +61,20 @@ docker rm ${CONTAINER_NAME}
 sudo ln -s /home/pi/julia-1.5.3/bin/julia /usr/bin/julia
 ```
 
-2. Install dependency. When running Julia for the first time, you'll need to install the package manager manually (Why? Not sure! It failed otherwise.)
+3. Sanity check:
+```
+which julia
+julia --version
+```
+should yield ` ` and ` `, respectively
+
+4. When running Julia for the first time, you'll need to install the package manager manually (Why? Not sure! It failed otherwise.)
 ```
 rm -rf ~/.julia/registries/General
-julia
+julia   # launch the REPL
+```
+Then from the REPL do
+```julia
 using Pkg
 Pkg.Registry.add("General")
 ```
@@ -83,6 +92,7 @@ julia -e "using Pkg; Pkg.add("LibSerialPort")"
 ```
 sudo apt-get install autoconf
 sudo apt-get install libtool
+sudo apt install git
 
 git clone https://github.com/sigrokproject/libserialport.git
 cd libserialport
@@ -132,40 +142,34 @@ touch ~/.tmux.conf
 echo "set -g mouse on" >> ~/.tmux.conf
 ```
 
-2. Get github credentials. For the account you want to have read (or read/write access) on the pi, generate a Personal Access Token (PAT): from Github, go to Settings > Developer Settings > PPersonal Access Tokens and generate a token. (Don't navigate away from this screen yet---you'll need access to the token soon!)
+2. Get github credentials. For the account you want to have read (or read/write access) on the pi, generate a Personal Access Token (PAT): on Github, do `Settings > Developer Settings > Personal Access Tokens` and generate a token. Don't navigate away from this screen yet---you'll need access to the generated token in a later step.
 
-3. On the pi, do
+3. Clone this repo
 ```
-sudo apt install git
 git config credential.helper store
-```
-
-11. Clone this repo!
-```
 git clone https://github.com/hannahilea/FlipDotsPi.git
-cd FlipDotsPi
 ```
-When prompted for a username, give your github username. When prompted for a password, use the PAT you generated in step 1.
-
-
+When prompted for a username, give your github username; when prompted for a password, use the PAT you generated in step 1.
 
 ### Displaying messages
 
-Currently there are two options for running the : command line and REPL.
+Currently there are two options for displaying messages with this package: via command line and via REPL.
 
-To display a one-time message on the pi, do
+To display a one-time message on the Pi, use the command line:
 ```
+cd FlipDotsPi
 julia --project=. fliptdot_message.jl "FLIP FLIP HOORAY!!!"
 ```
-This will then display the message `FLIP FLIP HOORAY!!!`.
+This will then display the message `FLIP FLIP HOORAY!!!`. (Note: it may take some time to precompile and display the message; don't be discouraged!)
 
-Additional configuration options are available through this command line interface; to see them, do
+If you don't see the message, you may need to adjust your port and/or baudrate, which can be done with flags. To see these configuration options, do
 ```
 julia --project=. flipdot_message.jl --help
 ```
 
-Alternatively, if you want to play around and don't want to deal with the precompilation overhead for each message, use the REPL: `julia --project=.`
+Alternatively, if you want to play around with displaying multiple messages and don't want to deal with the precompilation overhead for each message, run the code via the REPL: `julia --project=.`
 
+Then do:
 ```julia
 include("flipdot_message.jl")
 display_message("HUZZAH!")
@@ -173,20 +177,58 @@ display_message("O_o")
 display_message("YAY!")
 ```
 
-### Acknowledgments
+### FAQ
 
-Thanks to the follow resources for helping get us up and running:
--
--
--
+_Q. Even though I disabled Maestro from automatically running, I'd like to manually start it. How do I do that_
 
-
-
-
-4. Shut it down: `sudo shutdown -h now`
-
-Want to run Maestro? While SSH'd onto the pi, do
+A. Do
 ```
 maestro/start.sh
 ```
 then connect by loading `flipdots.local/` in the browser.
+
+
+_Q. How do I shut the pi down when I'm done using it?_
+
+A. It is recommended that the AlphaZeta boards be set to all white before longer term storage, before shutting down the board. Once you've done that, do `sudo shutdown -h now`.
+
+
+_Q. I can run messages on the display with Maestro, but something about my Julia installation failed. Is there a faster way to bisect the error?_
+
+A. You can try installing/running [a different flipdots scroller](https://github.com/vwyf/vwyf_door_sensor/tree/2a281e274d4d14e7d020158d55fd5dc94bfccd13) via Python. (Be sure to first follow the above steps to stop Maestro.)
+1. Set up:
+```
+sudo apt-get install python-pip
+pip install pyserial
+cd
+wget https://raw.githubusercontent.com/vwyf/vwyf_door_sensor/2a281e274d4d14e7d020158d55fd5dc94bfccd13/flipdot_demon.py
+python flipdot_demon.py
+```
+
+2. Edit the script (`nano flipdot_demon.py`) to change...
+...line 135 from
+```
+with serial.Serial("/dev/ttyUSB0", 9600) as srl:
+```
+to
+```
+with serial.Serial("/dev/serial0", 57600) as srl:
+```
+and also line 112 from
+```
+panel_address,
+```
+to
+```
+0xFF,
+```
+At the same time, you can also edit the message to be whatever you'd like by editing the `question_string`.
+
+3. Run it: `python flipdot_demon.py`
+
+### Acknowledgments
+
+Thanks to the follow resources for helping get us up and running:
+- [Installing Julia (plus additional required binaries) on the Pi Zero](https://discourse.julialang.org/t/have-a-try-julia-v1-5-1-for-arm32bit/45558/22)
+- [Understanding how messages are serialized/constructed](https://ksawerykomputery.pl/tools/flipdigits-player), as well as general inspiration.
+- [Example of scrolling message via Python](https://github.com/vwyf/vwyf_door_sensor/tree/2a281e274d4d14e7d020158d55fd5dc94bfccd13)
