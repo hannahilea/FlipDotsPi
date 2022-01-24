@@ -3,6 +3,10 @@
 - [ ] Update readme for now-working changelog instructions!
   - remove installation cruft from old attempts
 
+- sysimage
+
+- argparsing for script
+
 - set up server for pi
   - install julia on pi
   - run same startup steps as for previous pi
