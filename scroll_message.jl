@@ -117,7 +117,7 @@ function show_slice(t, srl, question)
 end
 
 #TODO fix looping (both logic and ncount)
-function display_message(message; loop::Bool=false)
+function scroll_message(message; loop::Bool=false)
     # loop over question string and add columns to question
     question = UInt8[]
     for c in message
@@ -180,10 +180,10 @@ end
 
 if !isinteractive()
     parsed_args = parse_commandline()
-    println("Parsed args:")
+    @debug  println("Parsed args:")
     for (arg, val) in parsed_args
-        println("  $arg  =>  $val")
+        @debug println("  $arg  =>  $val")
     end
     #TODO: set up srl, etc; use options
-    display_message(parsed_args["message"]; loop=false)
+   # scroll_message(parsed_args["message"]; loop=false)
 end
