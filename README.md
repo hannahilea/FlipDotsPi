@@ -185,7 +185,7 @@ A. Do
 ```
 maestro/start.sh
 ```
-then connect by loading `flipdots.local/` in the browser.
+then connect by loading [`flipdots.local/`](http://flipdots.local) in the browser.
 
 
 _Q. How do I shut the pi down when I'm done using it?_
