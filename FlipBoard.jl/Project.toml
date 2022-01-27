@@ -1,6 +1,6 @@
-name = "FlipDots"
+name = "FlipBoard"
 uuid = "96c49371-6108-43a2-a244-1c47317f47be"
-authors = ["hannahilea <hannahilea@users.noreply.github.com>, "aferguso2 <aferguso2@users.noreply.github.com>, and contributors"]
+authors = ["hannahilea <hannahilea@users.noreply.github.com>", "aferguso2 <aferguso2@users.noreply.github.com>, and contributors"]
 version = "0.0.1"
 
 [compat]
