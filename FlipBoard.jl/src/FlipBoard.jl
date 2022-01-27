@@ -2,6 +2,8 @@ module FlipBoard
 
 export FlipDots, FlipDigits, scroll_message
 
+using LibSerialPort
+
 #TODO: Set up LibSerialPort stuff, entry script, tests
 #TODO: Make MockSerialPort for displaying plots of different boards
 
