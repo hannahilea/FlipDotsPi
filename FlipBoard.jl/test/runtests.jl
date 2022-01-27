@@ -1,10 +1,13 @@
-using FlipBoard
 using Test
+using FlipBoard
+using FlipBoard: construct_message
 
 @testset "FlipBoard.jl" begin
-    dots = FlipDots(28, 7)
-    digits = FlipDigits(7, 28)
+    dot_board = FlipDots()
+    msg = construct_message(dot_board, "avast")
+    scroll = scroll_message(dot_board, "avast")
 
-    @test_throws ErrorException scroll_message(dots, "woo")
-    @test_throws ErrorException  scroll_message(digits, "woo")
+    digit_board = FlipDigits()
+    msg = construct_message(digit_board, "avast")
+    @test_throws ErrorException  scroll_message(digit_board, "woo")
 end
