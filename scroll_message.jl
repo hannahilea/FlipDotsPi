@@ -34,6 +34,7 @@ const DEFAULT_PORTNAME = "/dev/ttyS0"  # "/dev/serial0"
 const DEFAULT_BAUDRATE = 57600
 const DEFAULT_LOOPCOUNT = 1
 const DEFAULT_SCROLLPAUSE = 0.3f0
+const DEFAULT_DISPLAYTYPE = "dots"
 
 font = Dict(
     ' ' => UInt8.([0]),
@@ -100,58 +101,134 @@ all_dark = [
     0x8F # EOT
 ]
 
-function show_slice(t, srl, question)
+hello_world = [
+    0x80,  #header
+    0x83,  # 28 bytes refresh
+    0xFF,  # address
+    digitsfont['1'], digitsfont['2'], digitsfont['8'], digitsfont['8'], # 28 bytes data
+    0x00, 0x00, 0x00, #0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x8F # EOT
+]
+
+digitsfont = Dict(
+    ' ' => seg_to_bits([]),
+    '-' => seg_to_bits([1]),
+    '_' => seg_to_bits([4]),
+    '0' => seg_to_bits([2:7]...),
+    '1' => seg_to_bits([5, 6]),
+    '2' => seg_to_bits([7, 6, 1, 3, 4]),
+    '3' => seg_to_bits([7, 6, 1, 5, 4]),
+    '4' => seg_to_bits([2, 1, 6, 5]),
+    '5' => seg_to_bits([7, 2, 1, 5, 4]),
+    '6' => seg_to_bits([7, 2, 3, 4, 5, 1]),
+    '7' => seg_to_bits([7, 6, 5]),
+    '8' => seg_to_bits([1:7]...),
+    '9' => seg_to_bits([1, 2, 4, 5, 6, 7]),
+    'A' => seg_to_bits([1, 2, 3, 5, 6, 7]),
+    'B' => seg_to_bits([1, 2, 3, 4, 5]),
+    'C' => seg_to_bits([1, 3, 4]),
+    'D' => seg_to_bits([1, 3, 4, 5, 6]),
+    'E' => seg_to_bits([7, 2, 1, 3, 4]),
+    'F' => seg_to_bits([7, 2, 1, 3]),
+    'G' => seg_to_bits([7, 2, 3, 4, 5]),
+    'H' => seg_to_bits([2, 3, 1, 5]),
+    'I' => seg_to_bits([5]),
+    'J' => seg_to_bits([6, 5, 4, 3]),
+    'K' => seg_to_bits([7, 2, 1, 3, 5]),
+    'L' => seg_to_bits([2, 3, 4]),
+    'M' => seg_to_bits([2, 3, 7, 6, 5]),
+    'N' => seg_to_bits([3, 1, 5]),
+    'O' => seg_to_bits([1, 3, 4, 5]),
+    'P' => seg_to_bits([3, 2, 7, 6, 1]),
+    'Q' => seg_to_bits([1, 2, 7, 6, 5]),
+    'R' => seg_to_bits([3, 1]),
+    'S' => seg_to_bits([2, 1, 5, 4]),
+    'T' => seg_to_bits([2, 3, 1, 4]),
+    'U' => seg_to_bits([3, 4, 5]),
+    'V' => seg_to_bits([2, 3, 4, 5, 6]),
+    'W' => seg_to_bits([2, 3, 4, 5, 6, 1]),
+    'X' => seg_to_bits([2, 3, 6, 5, 1]),
+    'Y' => seg_to_bits([2, 1, 6, 5, 4]),
+    'Z' => seg_to_bits([7, 6, 3, 4]),
+)
+
+function seg_to_bits(i_segs::AbstractVector)
+    bitstr = zeros(Int, 8)
+    foreach(i -> bitstr[i] = 1 , i_segs)
+    return parse(UInt8, reverse(join(bitstr)), base=2)
+end
+
+function show_slice(t, srl, msg; wrap_msg=false)
     transmission = [
         0x80, #header
         0x83, # 28 bytes, refresh
         0xFF, # panel address
     ]
-
-    foreach(t:(t + 27)) do i
-        x = (i % length(question)) + 1
-        append!(transmission, question[x])
+    for i in t:(t + 27)
+        if i <= length(msg)
+            append!(transmission, msg[i])
+        elseif wrap_msg
+            append!(transmission, msg[i % length(msg)])
+        else
+            append!(transmission, 0x00)
+        end
     end
-
     append!(transmission, 0x8F) # EOT
     write(srl, transmission)
 end
 
-function construct_question(message; panel_width)
+function construct_question(message; panel_width=DEFAULT_PANEL_WIDTH, displaytype="dots")
     # loop over question string and add columns to question
+    font_dict = font
+    add_spacer = true
+    if displaytype != "dots"
+        font_dict = digitsfont
+        add_spacer = false
+    end
+    message = uppercase(message) # TODO: when supporting lowercase on dots board, move into digits only
     question = UInt8[]
     for c in message
-        if c in keys(font)
-            append!(question, font[c])
-            append!(question, 0) # put space between letters
+        if c in keys(font_dict)
+            append!(question, font_dict[c])
+            add_spacer && append!(question, 0) # put space between letters
         end
     end
 
     # if question is fewer than 28 columns pad it out with spaces
     while length(question) < panel_width
-        append!(question, font[' '])
+        append!(question, font_dict[' '])
     end
+    displaytype != "dots" && append!(question, font_dict[' '])
     return question
 end
 
-#TODO fix looping (both logic and ncount)
-function scroll_message(message; loopcount::Int=DEFAULT_LOOPCOUNT, baudrate::Int=DEFAULT_BAUDRATE,
-                        portname::AbstractString=DEFAULT_PORTNAME, scrollpause=DEFAULT_SCROLLPAUSE,
-                        panel_width=DEFAULT_PANEL_WIDTH, verbose=false)
-    question = construct_question(message; panel_width)
+function flash_display(srl, sleep_sec=0.5)
+    write(srl, all_bright)
+    sleep(sleep_sec)
+    write(srl, all_dark)
+    sleep(sleep_sec)
+    return nothing
+end
+
+function scroll_message(message; loopcount::Int=DEFAULT_LOOPCOUNT, baudrate=DEFAULT_BAUDRATE,
+                        portname=DEFAULT_PORTNAME, scrollpause=DEFAULT_SCROLLPAUSE,
+                        panel_width=DEFAULT_PANEL_WIDTH, displaytype=DEFAULT_DISPLAYTYPE, verbose=false)
+    question = construct_question(message; panel_width, displaytype)
     verbose && println("Msg to display: $question")
     LibSerialPort.open(portname, baudrate) do srl
-        write(srl, all_bright)
-        sleep(0.5)
-        write(srl, all_dark)
-        sleep(0.5)
+        verbose && println("Displaying message")
 
-        verbose && (@info "why" length(question) length(message))
-        t = 1
-        while t < ((length(question) + 1) * loopcount)
-            show_slice(t, srl, question)
-            sleep(scrollpause)
-            t += 1
-            t >= length(question) && (t = 1)
+        loopcount == 0 && show_slice(1, srl, question; wrap_msg=false)
+
+        for i in 1:loopcount
+            wrap_msg = i != loopcount
+            for t in 1:length(question)
+                show_slice(t, srl, question; wrap_msg)
+                sleep(scrollpause)
+            end
         end
     end
 end
@@ -183,6 +260,10 @@ function parse_commandline()
             help = "Width of the display (# dots)"
             arg_type = Int
             default = DEFAULT_PANEL_WIDTH
+        "--displaytype"
+            help = "Font option: flipdots display (`dots`) or flipdigits display (`digits`)"
+            arg_type = String
+            default = DEFAULT_displaytype
         "--verbose"
             help = "Show additional debug statements"
             action = :store_true
@@ -200,5 +281,35 @@ if !isinteractive()
     args.verbose && println("Parsed args: $args")
     scroll_message(args.message; loopcount=args.loopcount, baudrate=args.baudrate,
                    portname=args.portname, scrollpause=args.scrollpause, verbose=args.verbose,
-                   panel_width=args.panelwidth)
+                   panel_width=args.panelwidth, displaytype=args.displaytype)
+end
+
+#####
+## Fun snippets
+#####
+
+function drumbeat_snippet(pause=.1)
+    for i in 1:16
+        scroll_message("1 1 1 1 "; loopcount=0, displaytype="digits")
+        sleep(pause)
+        scroll_message("1 1    1 "; loopcount=0, displaytype="digits")
+        sleep(pause)
+        scroll_message(" 1     1 "; loopcount=0, displaytype="digits")
+        sleep(pause)
+        scroll_message("      "; loopcount=0, displaytype="digits")
+        sleep(pause)
+    end
+end
+
+function drumbeat_snippet2(pause=.1)
+    for i in 1:16
+        scroll_message("1 1 1 1 1 1 1 1 1 1 1 1 1 1"; loopcount=0, displaytype="digits")
+        sleep(pause)
+        scroll_message("1   1 1 1   1 1 1 1   1 1 1"; loopcount=0, displaytype="digits")
+        sleep(pause)
+        scroll_message("1   1 1 1             1 1 1"; loopcount=0, displaytype="digits")
+        sleep(pause)
+        scroll_message(""; loopcount=0, displaytype="digits")
+        sleep(pause)
+    end
 end

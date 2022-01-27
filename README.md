@@ -172,9 +172,9 @@ Alternatively, if you want to play around with displaying multiple messages and 
 Then do:
 ```julia
 include("scroll_message.jl")
-display_message("HUZZAH!")
-display_message("O_o")
-display_message("YAY!")
+scroll_message("HUZZAH!")
+scroll_message("O_o")
+scroll_message("YAY!")
 ```
 
 ### FAQ
@@ -185,7 +185,7 @@ A. Do
 ```
 maestro/start.sh
 ```
-then connect by loading `flipdots.local/` in the browser.
+then connect by loading [`flipdots.local/`](http://flipdots.local) in the browser.
 
 
 _Q. How do I shut the pi down when I'm done using it?_
