@@ -51,8 +51,8 @@ if !isinteractive()
     srl = setup_srl() #TODO implement
         # baudrate=args.baudrate,
         #            portname=args.portname,
-    board = FlipDigits() #TODO: construct from options displaytype=args.displaytype
-        # panel_width=args.panelwidth
+    board = displaytype == "dots" ? FlipDots(; args.width, args.height) :
+                                    FlipDigits(; args.width, args.height)
     msg = text_to_bytes(board, args.message)
     scroll_bytes(msg; loopcount=args.loopcount, scrollpause=args.scrollpause)
 end

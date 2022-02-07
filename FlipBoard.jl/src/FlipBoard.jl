@@ -7,6 +7,12 @@ using LibSerialPort
 #TODO: Set up LibSerialPort stuff, entry script, tests
 #TODO: Make MockSerialPort for displaying plots of different boards
 
+const DEFAULT_PANEL_WIDTH = 28
+const DEFAULT_PORTNAME = "/dev/ttyS0"  # "/dev/serial0"
+const DEFAULT_BAUDRATE = 57600
+const DEFAULT_LOOPCOUNT = 1
+const DEFAULT_SCROLLPAUSE = 0.3f0
+
 abstract type AbstractFlipBoard end
 
 _error_not_yet_implemented(f, t) = error("`$f` not yet implemented for type `::$(typeof(t))`")
@@ -100,5 +106,6 @@ function flash_display(srl, pause=0.5; loopcount=1, buffer_length=28)
 end
 
 include("fonts.jl")
+include("extras.jl")
 
 end
