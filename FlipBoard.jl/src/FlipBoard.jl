@@ -74,20 +74,18 @@ end
 #todo: rewrite for ring buffer
 function scroll_bytes(srl, msg::AbstractVector{UInt8}; loopcount=1, scrollpause=0.3) #TODO defaults
     msg = text_to_bytes(b, msg; kwargs...)
-    for i in 1:loopcount
+    for i in 1:loopcount, t in 1:length(msg)
         wrap_msg = i != loopcount
-        for t in 1:length(msg)
-            slice = zeros(UInt8, 28) #TODO: generic for width
-            for (i_slice, i_msg) in enumerate(t:(t + 27))
-                if i_msg <= length(msg)
-                    slice[i_slice] = msg[i_msg]
-                elseif wrap_msg
-                    slice[i_slice] = msg[i_msg % length(msg)]
-                end
+        slice = zeros(UInt8, 28) #TODO: generic for width
+        for (i_slice, i_msg) in enumerate(t:(t + 27))
+            if i_msg <= length(msg)
+                slice[i_slice] = msg[i_msg]
+            elseif wrap_msg
+                slice[i_slice] = msg[i_msg % length(msg)]
             end
-            send_transmission(srl, slice)
-            sleep(scrollpause)
         end
+        send_transmission(srl, slice)
+        sleep(scrollpause)
     end
 end
 
