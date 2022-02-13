@@ -26,7 +26,7 @@
 ### 0x8F end
 
 using LibSerialPort
-using GLMakie
+using CairoMakie
 
 SCROLL_PAUSE = 0.1
 PANEL_WIDTH = 28
@@ -249,3 +249,57 @@ function plot_matrix_as_dots(img)
         current_figure()
 end
 plot_matrix_as_dots(img)
+
+DIGIT_BOARD_WIDTH = 7
+DIGIT_BOARD_HEIGHT = 4
+
+function plot_seven_seg(x, y)
+    # 0, 3
+    MARKER_SIZE = 75
+    #horizontal lines
+    bottom_line = [0.5, 0]
+    middle_line = [0.5, 1]
+    top_line = [0.5, 2]
+    horiz = hcat(bottom_line, middle_line, top_line)
+    scatter!(x .+ horiz[1, :], y .+ horiz[2, :], marker = :hline, markersize = MARKER_SIZE*1.3, color = :black)
+
+    #vertical lines
+    left_top = [0, 1.5]
+    right_top = [1, 1.5]
+    left_bottom = [0, 0.5]
+    right_bottom = [1, 0.5]
+    vert = hcat(left_top, right_top, left_bottom, right_bottom)
+    scatter!(x .+ vert[1, :], y .+ vert[2, :], marker = :vline, markersize = MARKER_SIZE, color = :black)
+    current_figure()
+end
+
+function make_flip_digits_plot()
+    # f = Figure(; resolution = (800, 1600))
+    # ax = Axis(f[1, 1])
+
+    y_loc = [0, 3, 6, 9]
+    # y_loc = [0:DIGITS_HEIGHT-1] .* (DIGITS_HEIGHT - 1)
+    x_loc = [0, 2, 4, 6, 8, 10, 12]
+    # x_loc = [0:DIGITS_WIDTH-1] .* (DIGITS_HEIGHT - 1)
+
+    for i_digits_x in x_loc
+        for i_digits_y = y_loc
+            plot_seven_seg(i_digits_x, i_digits_y)
+        end
+    end
+    current_figure()
+end
+
+f3 = Figure(; resolution = (1600, 1600))
+ax3 = Axis(f3[1, 1])
+make_flip_digits_plot()
+limits!(ax3, -1, 14, -1, 12)
+current_figure()
+
+x = 0
+y = 3
+f2 = Figure(; resolution = (800, 1600))
+ax2 = Axis(f2[1, 1])
+plot_seven_seg(x, y)
+limits!(ax2, x-1, x+2, y-1, y+3) # x1, x2, y1, y2
+current_figure()
