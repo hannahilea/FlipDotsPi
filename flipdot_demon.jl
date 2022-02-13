@@ -30,6 +30,7 @@ using GLMakie
 
 SCROLL_PAUSE = 0.1
 PANEL_WIDTH = 28
+PANEL_HEIGHT = 7
 
 portname = "/dev/serial0"
 baudrate = 57600
@@ -236,18 +237,15 @@ y = 1:7
 image(x, y, rotr90(img))
 
 
+#TODO make this plot white on black background
 function plot_matrix_as_dots(img)
     f = Figure(; resolution = (2800, 800))
-    # f = Figure()
-    # ax = Axis(f[1, 1], aspect = 1)
-    ax = Axis(f[1, 1]) #; resolution = (800, 500))
-    # tightlimits!(ax)
-    xax = 1:PANEL_WIDTH
-    img = map(i -> i == 1 ? missing : i, img)
-    for i_row in size(img, 1): -1: 1
-        scatter!(xax, i_row*0.1 .+ img[i_row, :], markersize = 75, color = :black)
-    end
-    current_figure()
+    ax = Axis(f[1, 1])
+    xs = repeat((1:PANEL_WIDTH), PANEL_HEIGHT, )
+    ys = repeat((1:PANEL_HEIGHT), inner=PANEL_WIDTH, )
+    img_colors = map(pixel -> pixel==1 ? :black : :white, rotr90(img))
+    scatter!(xs, ys, markersize = 85,
+        color = vec(img_colors), strokecolor = :black, strokewidth = 3)
+        current_figure()
 end
-
 plot_matrix_as_dots(img)
