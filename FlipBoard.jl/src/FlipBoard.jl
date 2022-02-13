@@ -4,9 +4,6 @@ export FlipDots, FlipDigits, scroll_message
 
 using LibSerialPort
 
-#TODO: Set up LibSerialPort stuff, entry script, tests
-#TODO: Make MockSerialPort for displaying plots of different boards
-
 const DEFAULT_PANEL_WIDTH = 28
 const DEFAULT_PORTNAME = "/dev/ttyS0"  # "/dev/serial0"
 const DEFAULT_BAUDRATE = 57600
@@ -15,11 +12,13 @@ const DEFAULT_SCROLLPAUSE = 0.3f0
 
 abstract type AbstractFlipBoard end
 
-_error_not_yet_implemented(f, t) = error("`$f` not yet implemented for type `::$(typeof(t))`")
+function _error_not_yet_implemented(f, t)
+    return error("`$f` not yet implemented for type `::$(typeof(t))`")
+end
 
 text_to_bytes(::AbstractFlipBoard, msg::AbstractVector{UInt8}; kwargs...) = msg
 function text_to_bytes(fb::AbstractFlipBoard, msg; kwargs...)
-    _error_not_yet_implemented("text_to_bytes", fb)
+    return _error_not_yet_implemented("text_to_bytes", fb)
 end
 
 #####
@@ -27,9 +26,9 @@ end
 #####
 
 Base.@kwdef struct FlipDots <: AbstractFlipBoard
-    width::Integer=28
-    height::Integer=7
-    font::Dict=dots_font
+    width::Integer = 28
+    height::Integer = 7
+    font::Dict = dots_font
 end
 
 text_to_bytes(fb::FlipDots, msg) = _text_to_bytes(msg, fb.font, true, false)
@@ -39,9 +38,9 @@ text_to_bytes(fb::FlipDots, msg) = _text_to_bytes(msg, fb.font, true, false)
 #####
 
 Base.@kwdef struct FlipDigits <: AbstractFlipBoard
-    width::Integer=7
-    height::Integer=4
-    font::Dict=digits_font
+    width::Integer = 7
+    height::Integer = 4
+    font::Dict = digits_font
 end
 
 text_to_bytes(fb::FlipDigits, msg) = _text_to_bytes(msg, fb.font, false, true)
@@ -52,13 +51,13 @@ text_to_bytes(fb::FlipDigits, msg) = _text_to_bytes(msg, fb.font, false, true)
 
 function seg_to_bits(i_segs::AbstractVector)
     bitstr = zeros(Int, 8)
-    foreach(i -> bitstr[i] = 1 , i_segs)
-    return parse(UInt8, reverse(join(bitstr)), base=2)
+    foreach(i -> bitstr[i] = 1, i_segs)
+    return parse(UInt8, reverse(join(bitstr)); base=2)
 end
 
 function send_transmission(srl, msg::UInt8; num_bytes=0x83, panel_address=0xFF)
     #TODO ensure msg is max bytes OR && it with max bytes so it works
-    transmission = [0x80, num_bytes, panel_address, msg...,  0x8F]
+    transmission = [0x80, num_bytes, panel_address, msg..., 0x8F]
     write(srl, transmission)
     return nothing
 end
