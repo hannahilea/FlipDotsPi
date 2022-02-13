@@ -6,6 +6,7 @@ using FlipBoard
 # Board-specific setup
 shared_srl = IOBuffer()
 if false #ON THE PI?!?! SET TO TRUE!
+    # Both boards are connectd to the same pi0 port:
     shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
 else
     show_output = () -> @info("Printed bytes: " * String(take!(both_boards_sink.srl)))
@@ -33,8 +34,8 @@ macro log_board(label::AbstractString, wait_sec::Int, expr)
 end
 
 # Set up boards
-dots_sink = AlphaZetaSrl(; address=0x03, srl=shared_srl)
-digits_sink = AlphaZetaSrl(; address=0x07, srl=shared_srl)
+dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
+digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
 both_boards_sink = all_alphazeta(shared_srl)
 
 @info "Testing reset behavior"
@@ -42,9 +43,11 @@ flash_reset(both_boards_sink)
 sleep(1)
 all_bright(dots_sink)
 sleep(1)
+all_dark(dots_sink)
+sleep(1)
 all_bright(digits_sink)
 sleep(1)
-all_dark(both_boards_sink)
+all_dark(digits_sink)
 sleep(1)
 
 @info """Test single message"

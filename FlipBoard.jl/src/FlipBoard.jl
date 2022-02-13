@@ -51,7 +51,7 @@ all_alphazeta(srl) = AlphaZetaSrl(; address=0xFF, srl)
     display_bytes(sink::AlphaZetaSrl, byte_msg)
 """
 function display_bytes(sink::AlphaZetaSrl, byte_msg::AbstractVector{UInt8})
-    bytes = view(byte_msg, min(sink.num_msg_bytes, length(byte_msg)))
+    bytes = view(byte_msg, 1:min(sink.num_msg_bytes, length(byte_msg)))
     extra_bytes = zeros(UInt8, sink.num_msg_bytes - length(bytes))
     transmission = [0x80, sink.command, sink.address, bytes..., extra_bytes..., 0x8F]
     write(sink.srl, transmission)
@@ -75,11 +75,11 @@ end
 ########## Construct byte messages
 ##########
 
-all_bright(sink::AlphaZetaSrl) = display_bytes(sink, ones(UInt8, sink.num_msg_bytes))
+all_bright(sink::AlphaZetaSrl) = display_bytes(sink, fill(0xFF, sink.num_msg_bytes))
 all_dark(sink::AlphaZetaSrl) = display_bytes(sink, zeros(UInt8, sink.num_msg_bytes))
 clear(sink::AlphaZetaSrl) = all_dark(sink)
 
-function flash_reset(sink; pause=0.1)
+function flash_reset(sink; pause=0.6)
     all_bright(sink)
     sleep(pause)
     all_dark(sink)
