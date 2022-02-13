@@ -5,7 +5,7 @@ export open_srl, AlphaZetaSrl, all_alphazeta, scroll_bytes, flash_reset,
 
 using LibSerialPort
 
-const OPEN_SERIAL_PORTS = Ref{Dict{Tuple{String,Int64},SerialPort}}()
+const OPEN_SERIAL_PORTS = Dict{Tuple{String,Int64},SerialPort}()
 
 ##########
 ########## Sink setup
@@ -66,8 +66,8 @@ and open it.
 """
 function open_srl(; portname, baudrate)
     key = (portname, baudrate)
-    return get(key, OPEN_SERIAL_PORTS[]) do
-        srl = open(portname, baudrate; SP_MODE_WRITE)
+    return get(key, OPEN_SERIAL_PORTS) do
+        srl = open(portname, baudrate; mode=SP_MODE_WRITE)
         return srl
     end
 end
