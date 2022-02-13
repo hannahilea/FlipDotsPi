@@ -26,6 +26,7 @@
 ### 0x8F end
 
 using LibSerialPort
+using GLMakie
 
 SCROLL_PAUSE = 0.1
 PANEL_WIDTH = 28
@@ -229,3 +230,24 @@ msg = "HELLO"
 byte_array_message = make_message(msg)
 img = bytes_to_matrix(byte_array_message)
 test =  matrix_to_bytes(img)
+
+x = 1:28
+y = 1:7
+image(x, y, rotr90(img))
+
+
+function plot_matrix_as_dots(img)
+    f = Figure(; resolution = (2800, 800))
+    # f = Figure()
+    # ax = Axis(f[1, 1], aspect = 1)
+    ax = Axis(f[1, 1]) #; resolution = (800, 500))
+    # tightlimits!(ax)
+    xax = 1:PANEL_WIDTH
+    img = map(i -> i == 1 ? missing : i, img)
+    for i_row in size(img, 1): -1: 1
+        scatter!(xax, i_row*0.1 .+ img[i_row, :], markersize = 75, color = :black)
+    end
+    current_figure()
+end
+
+plot_matrix_as_dots(img)
