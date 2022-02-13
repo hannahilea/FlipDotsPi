@@ -1,3 +1,24 @@
+##########
+########## Fun stuff
+##########
+
+#todo: rewrite for ring buffer
+function scroll_bytes(sink, msg::AbstractVector{UInt8}; loopcount=2, scrollpause=0.1) #TODO defaults
+    for i in 1:loopcount, t in 1:length(msg)
+        wrap_msg = i != loopcount
+        slice = zeros(UInt8, sink.num_msg_bytes)
+        for (i_slice, i_msg) in enumerate(t:(t + sink.num_msg_bytes - 1))
+            if i_msg <= length(msg)
+                slice[i_slice] = msg[i_msg]
+            elseif wrap_msg
+                slice[i_slice] = msg[i_msg % length(msg) + 1]
+            end
+        end
+        display_bytes(sink, slice)
+        sleep(scrollpause)
+    end
+end
+
 #####
 ##### Sequency rhythms
 #####
