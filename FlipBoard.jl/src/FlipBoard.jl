@@ -66,9 +66,8 @@ and open it.
 """
 function open_srl(; portname, baudrate)
     key = (portname, baudrate)
-    return get(key, OPEN_SERIAL_PORTS) do
-        srl = open(portname, baudrate; mode=SP_MODE_WRITE)
-        return srl
+    return get!(OPEN_SERIAL_PORTS, key) do
+        return LibSerialPort.open(portname, baudrate; mode=SP_MODE_WRITE)
     end
 end
 
