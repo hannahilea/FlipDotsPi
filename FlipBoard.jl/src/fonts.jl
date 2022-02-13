@@ -41,6 +41,7 @@ digits_font = Dict(
 )
 
 dots_font = Dict(
+    #TODO: colon, semicolon, comma, period, underscore, degree
     ' ' => UInt8.([0]),
     '!' => UInt8.([46]),
     '+' => UInt8.([24,  126, 126,  24,  0]),
