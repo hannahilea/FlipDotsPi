@@ -1,5 +1,6 @@
 # Display weather on the flipdots board!
 using Pkg
+Pkg.resolve()
 Pkg.instantiate()
 
 using FlipBoard
