@@ -56,7 +56,7 @@ if !isinteractive()
     srl = open_srl(; portname=args.portname, baudrate=args.baudrate)
     sink = AlphaZetaSrl(; address=args.address, srl)
 
-    msg = displaytype == "digits" ? text_to_digits_bytes(args.message) :
+    msg = args.displaytype == "digits" ? text_to_digits_bytes(args.message) :
           text_to_dots_bytes(args.message)
     args.repeatcount < 1 ? display_bytes(sink, msg) :
         scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
