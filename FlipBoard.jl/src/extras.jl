@@ -17,6 +17,7 @@ function scroll_bytes(sink, msg::AbstractVector{UInt8}; loopcount=2, scrollpause
         display_bytes(sink, slice)
         sleep(scrollpause)
     end
+    return nothing
 end
 
 #####
