@@ -26,7 +26,7 @@ function parse_commandline()
         default = "/dev/ttyS0"
         "--scrollpause"
         help = "Pause between scroll updates (sec)"
-        arg_type = Float32
+        arg_type = Float64
         default = 0.2
         "--displaytype"
         help = "Font option: flipdots display (`dots`) or flipdigits display (`digits`)"
