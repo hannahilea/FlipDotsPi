@@ -66,7 +66,7 @@ sudo ln -s /home/pi/julia-1.5.3/bin/julia /usr/bin/julia
 which julia
 julia --version
 ```
-should yield ` ` and ` `, respectively
+should yield `/usr/bin/julia` and `julia version 1.5.3`, respectively
 
 4. When running Julia for the first time, you'll need to install the package manager manually (Why? Not sure! It failed otherwise.)
 ```
@@ -123,12 +123,18 @@ sudo usermod -a -G dialout pi
 sudo reboot
 ```
 
-5. Try it! From Julia, do:
+1. (Optional) Install additional dependency (not required, but will prevent a warning from popping up every time you run `LibSerialPort.jl`):
+```
+sudo apt-get install libopenblas-dev
+```
+
+7. Try it! From Julia, do:
 ```julia
 using LibSerialPort
 srl = LibSerialPort.open("/dev/ttyS0", 57600; mode=SP_MODE_WRITE)
 ```
 ...this doesn't do anything yet, but it also shouldn't error.
+
 
 ### Additional Pi configuration
 
@@ -151,31 +157,10 @@ git clone https://github.com/hannahilea/FlipDotsPi.git
 ```
 When prompted for a username, give your github username; when prompted for a password, use the PAT you generated in step 1.
 
+
 ### Displaying messages
 
-Currently there are two options for displaying messages with this package: via command line and via REPL.
-
-To display a one-time message on the Pi, use the command line:
-```
-cd FlipDotsPi
-julia --project=. fliptdot_message.jl "FLIP FLIP HOORAY!!!"
-```
-This will then display the message `FLIP FLIP HOORAY!!!`. (Note: it may take some time to precompile and display the message; don't be discouraged!) The quotes around the message are required.
-
-If you don't see the message, you may need to adjust your port and/or baudrate, which can be done with flags. To see these configuration options, do
-```
-julia --project=. scroll_message.jl --help
-```
-
-Alternatively, if you want to play around with displaying multiple messages and don't want to deal with the precompilation overhead for each message, run the code via the REPL: `julia --project=.`
-
-Then do:
-```julia
-include("scroll_message.jl")
-scroll_message("HUZZAH!")
-scroll_message("O_o")
-scroll_message("YAY!")
-```
+To display messages on the board, see [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md)!
 
 ### FAQ
 
