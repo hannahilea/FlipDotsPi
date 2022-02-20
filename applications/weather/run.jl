@@ -1,4 +1,6 @@
 # Display weather on the flipdots board!
+using Pkg
+Pkg.instantiate()
 
 using FlipBoard
 using HTTP
@@ -41,13 +43,8 @@ end
 format_weather(::Any) = ("N/A", "Unable to fetch weather")
 
 function format_weather(forecast, hourly_forecast)
-    # short_str = string(_get_first_int_result_after_key(hourly_forecast, "temperature"),
-    #                    "° (", _get_first_int_result_after_key(forecast, "temperature"), "/",
-    #                    _get_first_int_result_after_key(forecast, "temperature"; index=3),
-    #                    ")")
     short_str = string("     ", _get_first_int_result_after_key(hourly_forecast, "temperature"),
                        "°")
-
     long_str = string("Now: ", _get_first_int_result_after_key(hourly_forecast, "temperature"), "° ",
                       _get_first_result_after_key(forecast, "shortForecast"), "! ",
                       _get_first_result_after_key(forecast, "name"; index=3), ": ",
@@ -68,9 +65,9 @@ function update_with_current_weather()
     return nothing
 end
 
-# ...when running as script (not from REPL)
+# When running as script (not from REPL)...
 if !isinteractive()
-    # update every fifteen minutes for 4 hours
+    # ...update every fifteen minutes for 4 hours
     update_pause_sec = 60 * 15
     num_updates = 4 * 4
 
