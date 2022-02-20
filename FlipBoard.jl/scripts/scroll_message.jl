@@ -10,7 +10,8 @@ using FlipBoard
 using ArgParse
 
 function parse_commandline()
-    s = ArgParseSettings(; description="Scroll a message on a FlipDots display.")
+    s = ArgParseSettings(;
+                         description="Scroll a message on a FlipDots or FlipDigits display.")
     @add_arg_table s begin
         "--loopcount"
         help = "Number of times to repeat the message. (To display with no scroll, set o `0`.)"
@@ -58,6 +59,6 @@ if !isinteractive()
 
     msg = args.displaytype == "digits" ? text_to_digits_bytes(args.message) :
           text_to_dots_bytes(args.message)
-    args.repeatcount < 1 ? display_bytes(sink, msg) :
+    args.loopcount < 1 ? display_bytes(sink, msg) :
         scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
 end
