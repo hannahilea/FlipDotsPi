@@ -10,8 +10,13 @@ using HTTP
 using JSON
 
 # Set up board
-shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
-dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
+# Board-specific setup
+# Hacky check to see if we're on the pi, to prevent trying to connect to port that
+# isn't set up from laptop. For other systems, update `shared_srl` to point to
+# the relevant serial port!
+shared_srl = Sys.islinux() ? open_srl(; portname="/dev/ttyS0", baudrate=57600) : IOBuffer()
+
+digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
 
 ##### Helper functions
 
@@ -64,63 +69,27 @@ function get_default_routes()
     end
 end
 
-# Set up bus routes
-function get_route_timing(; route, verbose=false)
-    try
-        verbose && (@info route)
-        result = String(HTTP.request("GET",
-                                     "https://api.weather.gov/points/$location").body)
-
-        # Normally would use JSON to parse this...but for pi, really don't want
-        # all of those dependencies. So! Doing it the stupid brittle way here :)
-        forecast_url = _get_first_result_after_key(result, "forecast")
-        hourly_url = _get_first_result_after_key(result, "forecastHourly")
-        verbose && (@info "Location urls: " forecast_url hourly_url)
-
-        forecast_result = String(HTTP.request("GET", forecast_url).body)
-        hourly_result = String(HTTP.request("GET", hourly_url).body)
-        return forecast_result, hourly_result
-    catch e
-        @warn "Uh oh unable to get weather" e
-        return missing
+function update_with_current_timing()
+    bus_strs = map(default_busses) do bus
+        t = get_next_bus(bus)
+        return string(bus.name, " ", t)
     end
-end
-
-# Return short form, long form
-format_weather(::Any) = ("N/A", "Unable to fetch weather")
-
-function format_weather(forecast, hourly_forecast)
-    short_str = string("     ",
-                       _get_first_int_result_after_key(hourly_forecast, "temperature"), "°")
-    long_str = string("Now: ",
-                      _get_first_int_result_after_key(hourly_forecast, "temperature"), "° ",
-                      _get_first_result_after_key(forecast, "shortForecast"), "! ",
-                      _get_first_result_after_key(forecast, "name"; index=3), ": ",
-                      _get_first_result_after_key(forecast, "shortForecast"; index=3), "!")
-
-    return short_str, long_str
-end
-
-function update_with_current_weather()
-    # Get weather
-    static_msg, scroll_msg = format_weather(get_weather()...)
-    bytes_scroll = text_to_dots_bytes(scroll_msg)
-    bytes_static = text_to_dots_bytes(static_msg)
+    formatted_msg = join(rpad.(bus_strs, 7))
+    bytes_static = text_to_digits_bytes(formatted_msg)
 
     # Display it!
-    scroll_bytes(dots_sink, bytes_scroll; loopcount=1)
-    display_bytes(dots_sink, bytes_static)
+    display_bytes(digits_sink, bytes_static)
     return nothing
 end
 
 # When running as script (not from REPL)...
 if !isinteractive()
-    # ...update every fifteen minutes for 4 hours
-    update_pause_sec = 60 * 15
-    num_updates = 4 * 4
+    # ...update every 30 sec for 44 minutes
+    update_pause_sec = 30
+    num_updates = 2 * 4
 
     for _ in 1:num_updates
-        update_with_current_weather()
+        update_with_current_timing()
         sleep(update_pause_sec)
     end
     display_bytes(text_to_dots_bytes("Huzzah!"))
