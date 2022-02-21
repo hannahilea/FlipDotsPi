@@ -160,7 +160,12 @@ When prompted for a username, give your github username; when prompted for a pas
 
 ### Displaying messages
 
-To display messages on the board, see [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md)!
+To display text messages on either board, see [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md)!
+
+For an example of weather updates (for Somerville, MA), do
+```
+julia --project=applications/weather applications/weather/run.jl
+```
 
 ### FAQ
 
