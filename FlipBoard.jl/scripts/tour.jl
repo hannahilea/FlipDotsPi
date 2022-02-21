@@ -4,9 +4,12 @@
 using FlipBoard
 
 # Board-specific setup
+# Hacky check to see if we're on the pi, to prevent trying to connect to port that
+# isn't set up from laptop. For other systems, update `shared_srl` to point to
+# the relevant serial port!
 shared_srl = IOBuffer()
-if false #ON THE PI?!?! SET TO TRUE!
-    # Both boards are connectd to the same pi0 port:
+if Sys.islinux()
+    # In our system, both boards are connectd to the same pi0 port:
     shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
 else
     show_output = () -> @info("Printed bytes: " * String(take!(both_boards_sink.srl)))
