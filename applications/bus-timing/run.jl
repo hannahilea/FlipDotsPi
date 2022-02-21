@@ -1,5 +1,7 @@
 ## Display bus timing on a flipdigits display
 
+# Using MBTA API:
+# https://api-v3.mbta.com/docs/swagger/index.html#/Schedule/ApiWeb_ScheduleController_index
 # e.g.
 # https://api-v3.mbta.com/schedules?filter[stop]=2512&filter[route]=91&filter[direction_id]=1&sort=arrival_time&page[limit]=140
 
