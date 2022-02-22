@@ -7,7 +7,6 @@ Pkg.instantiate()
 @info "Loading dependencies..."
 using FlipBoard
 using HTTP
-using JSON
 
 # Set up board
 # Board-specific setup
@@ -33,23 +32,39 @@ const NIGHT = map(FlipBoard.seg_to_bits,
 const CLOUD = map(FlipBoard.seg_to_bits,
                   [[5, 6], [3, 4, 6], [2, 6], [3, 6], [4, 6], [4, 6], [5, 6]])
 
+# hacky JSON parser substitute
+# function _get_string_value(body, key)
+# #     "forecast": "
+# # end
+
+function _get_string_value(body, key; index=2)
+    return first(split(split(body, "\"$key\": \"")[index], "\","))
+end
+
+function _get_int_value(body, key; index=2)
+    return first(split(split(body, "\"$key\": ")[index], ","))
+end
+
+function _get_bool_value(body, key; index=2)
+    return lowercase(first(split(split(body, "\"$key\": ")[index], ","))) == "true"
+end
+
 # Set up weather; default loc_str is Somerville, MA
 function get_weather(; location="42.3876,-71.0995")
     try
         @debug "Getting weather..." "https://api.weather.gov/points/$location"
         @info "Fetching forecast links..."
-        data = JSON.parse(String(HTTP.request("GET",
-                                              "https://api.weather.gov/points/$location").body))
+        data = String(HTTP.request("GET", "https://api.weather.gov/points/$location").body)
 
         # Normally would use JSON to parse this...but for pi, really don't want
         # all of those dependencies. So! Doing it the stupid brittle way here :)
-        forecast_url = data["properties"]["forecast"]
-        hourly_url = data["properties"]["forecastHourly"]
+        forecast_url = _get_string_value(data, "forecast")
+        hourly_url = _get_string_value(data, "forecastHourly")
         @debug "Location urls: " forecast_url hourly_url
 
         @info "Fetching forecasts..."
-        forecast_result = JSON.parse(String(HTTP.request("GET", forecast_url).body))
-        hourly_result = JSON.parse(String(HTTP.request("GET", hourly_url).body))
+        forecast_result = String(HTTP.request("GET", forecast_url).body)
+        hourly_result = String(HTTP.request("GET", hourly_url).body)
         return forecast_result, hourly_result
     catch e
         @warn "Uh oh unable to get weather" e
@@ -57,21 +72,22 @@ function get_weather(; location="42.3876,-71.0995")
     end
 end
 
-function _get_weather_icon_from_hourly(current_hourly)
+function _get_weather_icon_from_hourly(hourly_forecast)
     # Check for rest of day through midnight
     # (_after_ midnight, is for next day)
     @info "Determining weather icon..."
-    i = findfirst(c -> contains(c["startTime"], "T00"), current_hourly)
-    weather_str = lowercase(join(map(c -> c["shortForecast"], current_hourly[1:i]), " "))
+    i = findfirst(1:24) do ind
+        return contains(_get_string_value(hourly_forecast, "startTime"; index=ind), "T00")
+    end
+    weather_str = lowercase(join(map(k -> _get_string_value(hourly_forecast, "shortForecast";
+                                                            index=k), 2:i)))
 
-    # Precedence: will there be precipitation today?
     contains(weather_str, "snow") && return SNOW
     contains(weather_str, "rain") && return RAIN
 
-    # If not, what is it like right now?
-    if first(current_hourly)["isDaytime"]
-        return contains(lowercase(first(current_hourly)["shortForecast"]), "sun") ? SUN :
-               CLOUD
+    if _get_bool_value(hourly_forecast, "isDaytime")
+        return contains(lowercase(_get_string_value(hourly_forecast, "shortForecast")),
+                        "sun") ? SUN : CLOUD
     end
     return NIGHT
 end
@@ -81,15 +97,15 @@ format_weather(::Any) = ("N/A", "Unable to fetch weather")
 
 function format_weather(forecast, hourly_forecast)
     @info "Formatting output..."
-    current = forecast["properties"]["periods"]
-    current_hourly = hourly_forecast["properties"]["periods"]
-
-    weather_icon = _get_weather_icon_from_hourly(current_hourly)
-    short_str = vcat(text_to_dots_bytes(string("   ", first(current_hourly)["temperature"],
-                                               "°")), weather_icon)
-    long_str = string("Now: ", first(current_hourly)["temperature"], "° ",
-                      first(current)["shortForecast"], "! ", current[2]["name"], ": ",
-                      current[2]["shortForecast"], "!")
+    weather_icon = _get_weather_icon_from_hourly(hourly_forecast)
+    short_str = vcat(text_to_dots_bytes(string("   ",
+                                               _get_int_value(hourly_forecast,
+                                                              "temperature"), "°")),
+                     weather_icon)
+    long_str = string("Now: ", _get_int_value(hourly_forecast, "temperature"), "° ",
+                      _get_string_value(forecast, "shortForecast"), "! ",
+                      _get_string_value(forecast, "name"; index=3), ": ",
+                      _get_string_value(forecast, "shortForecast"; index=3), "!")
     return short_str, text_to_dots_bytes(long_str)
 end
 
@@ -98,8 +114,12 @@ function update_with_current_weather(; scroll_long_msg=true)
     bytes_static, bytes_scroll = format_weather(get_weather()...)
 
     # Display it!
-    @info "Desplaying output..."
-    scroll_long_msg && scroll_bytes(dots_sink, bytes_scroll; loopcount=1)
+
+    if scroll_long_msg
+        @info "Displaying scrolling output..."
+        scroll_bytes(dots_sink, bytes_scroll; loopcount=1)
+    end
+    @info "Displaying static output..."
     display_bytes(dots_sink, bytes_static)
     return nothing
 end
@@ -110,10 +130,10 @@ else
     # When running as script (not from REPL)...
     # ...update every hour until we tell it to stop
     update_pause_sec = 60 * 60
-    scroll_long_msg = true
+    scroll_long = true
     while true
-        update_with_current_weather(; scroll_long_msg)
-        scroll_long_msg = false # Only scroll the first time
+        update_with_current_weather(; scroll_long_msg=scroll_long)
+        global scroll_long = false # Only scroll the first time
         sleep(update_pause_sec)
     end
     display_bytes(text_to_dots_bytes("Huzzah!"))
