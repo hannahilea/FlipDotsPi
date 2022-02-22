@@ -6,7 +6,6 @@ Pkg.instantiate()
 
 @info "Loading dependencies..."
 using FlipBoard
-using HTTP
 
 # Set up board
 # Board-specific setup
@@ -33,10 +32,6 @@ const CLOUD = map(FlipBoard.seg_to_bits,
                   [[5, 6], [3, 4, 6], [2, 6], [3, 6], [4, 6], [4, 6], [5, 6]])
 
 # hacky JSON parser substitute
-# function _get_string_value(body, key)
-# #     "forecast": "
-# # end
-
 function _get_string_value(body, key; index=2)
     return first(split(split(body, "\"$key\": \"")[index], "\","))
 end
@@ -54,7 +49,7 @@ function get_weather(; location="42.3876,-71.0995")
     try
         @debug "Getting weather..." "https://api.weather.gov/points/$location"
         @info "Fetching forecast links..."
-        data = String(HTTP.request("GET", "https://api.weather.gov/points/$location").body)
+        data = read(`curl "https://api.weather.gov/points/$location"`, String)
 
         # Normally would use JSON to parse this...but for pi, really don't want
         # all of those dependencies. So! Doing it the stupid brittle way here :)
@@ -63,8 +58,8 @@ function get_weather(; location="42.3876,-71.0995")
         @debug "Location urls: " forecast_url hourly_url
 
         @info "Fetching forecasts..."
-        forecast_result = String(HTTP.request("GET", forecast_url).body)
-        hourly_result = String(HTTP.request("GET", hourly_url).body)
+        forecast_result = read(`curl $(forecast_url)`, String)
+        hourly_result = read(`curl $(hourly_url)`, String)
         return forecast_result, hourly_result
     catch e
         @warn "Uh oh unable to get weather" e
@@ -114,7 +109,6 @@ function update_with_current_weather(; scroll_long_msg=true)
     bytes_static, bytes_scroll = format_weather(get_weather()...)
 
     # Display it!
-
     if scroll_long_msg
         @info "Displaying scrolling output..."
         scroll_bytes(dots_sink, bytes_scroll; loopcount=1)
