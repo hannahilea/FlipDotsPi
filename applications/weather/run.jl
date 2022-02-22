@@ -129,6 +129,7 @@ else
         update_with_current_weather(; scroll_long_msg=scroll_long)
         global scroll_long = false # Only scroll the first time
         sleep(update_pause_sec)
+        flash_reset(dots_sink)
     end
     display_bytes(text_to_dots_bytes("Huzzah!"))
 end
