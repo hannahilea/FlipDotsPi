@@ -140,8 +140,8 @@ if isinteractive()
     update_with_current_weather()
 else
     # When running as script (not from REPL)...
-    # ...update every hour until we tell it to stop
-    update_pause_sec = 60 * 60
+    # ...update every half hour until we tell it to stop
+    update_pause_sec = 30 * 60
     scroll_long = true
     while true
         update_with_current_weather(; scroll_long_msg=scroll_long)
