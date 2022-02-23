@@ -33,15 +33,30 @@ const CLOUD = map(FlipBoard.seg_to_bits,
 
 # hacky JSON parser substitute
 function _get_string_value(body, key; index=2)
-    return first(split(split(body, "\"$key\": \"")[index], "\","))
+    spl_body = split(body, "\"$key\": \"")
+    if length(spl_body) < index
+        @warn "no can do str" key length(spl_body) index
+        return ""
+    end
+    return first(split(spl_body[index], "\","))
 end
 
 function _get_int_value(body, key; index=2)
-    return first(split(split(body, "\"$key\": ")[index], ","))
+    spl_body = split(body, "\"$key\": ")
+    if length(spl_body) < index
+        @warn "no can do int" key length(spl_body) index
+        return "-"
+    end
+    return first(split(spl_body[index], ","))
 end
 
 function _get_bool_value(body, key; index=2)
-    return lowercase(first(split(split(body, "\"$key\": ")[index], ","))) == "true"
+    spl_body = split(body, "\"$key\": ")
+    if length(spl_body) < index
+        @warn "no can do int" key length(spl_body) index
+        return true
+    end
+    return lowercase(first(split(spl_body[index], ","))) == "true"
 end
 
 # Set up weather; default loc_str is Somerville, MA
@@ -74,8 +89,9 @@ function _get_weather_icon_from_hourly(hourly_forecast)
     i = findfirst(1:24) do ind
         return contains(_get_string_value(hourly_forecast, "startTime"; index=ind), "T00")
     end
-    weather_str = lowercase(join(map(k -> _get_string_value(hourly_forecast, "shortForecast";
-                                                            index=k), 2:i)))
+    isnothing(i) && (i == 2)
+    weather_str = lowercase(join(map(k -> _get_string_value(hourly_forecast,
+                                                            "shortForecast"; index=k), 2:i)))
 
     contains(weather_str, "snow") && return SNOW
     contains(weather_str, "rain") && return RAIN
@@ -97,10 +113,12 @@ function format_weather(forecast, hourly_forecast)
                                                _get_int_value(hourly_forecast,
                                                               "temperature"), "°")),
                      weather_icon)
+    @info "Formatting scrolling output..."
     long_str = string("Now: ", _get_int_value(hourly_forecast, "temperature"), "° ",
                       _get_string_value(forecast, "shortForecast"), "! ",
                       _get_string_value(forecast, "name"; index=3), ": ",
                       _get_string_value(forecast, "shortForecast"; index=3), "!")
+    @info "\t-> $(long_str)"
     return short_str, text_to_dots_bytes(long_str)
 end
 
