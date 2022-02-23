@@ -42,45 +42,45 @@ end
 #####
 ##### Sequency rhythms
 #####
-_pattern = Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0]
 
-function flip_bytes(sink)
-    display_bytes(sink_dots, bytes)
-    return nothing
-end
-
-# https://en.wikipedia.org/wiki/Clapping_Music, idea by cpain
-function clapping_music(sink_dots, sink_2; pause=0.2)
-    display_bytes(sink_dots, text_to_dots_bytes("Steve"))
-    sleep(2)
-    display_bytes(sink_dots, text_to_dots_bytes("Reich"))
-    sleep(2)
-    scroll_bytes(sink_dots, text_to_dots_bytes("Clapping Music"); loopcount=1)
-    sleep(2)
-    clear(sink_dots)
-    sleep(2)
-
-    # Play the thing!
+function _clapping_music(sink_dots, sink_digits; pause=0.1875,
+                         clap_pattern=Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
+                         num_repeats=12, num_shifts=13, bytes_update_dots=28,
+                         bytes_update_digits=7)
     i1 = 1
     i2 = 1
-    num_repeats = 4 #12
-    num_shifts = 3 #12
     for _ in 1:num_shifts
         for _ in 1:num_repeats, _ in 1:12 # length of pattern
-            downbeat = i1 % 12 == 1 #todo: use downbeat to make just first louder;
-            # will only work when we update existing state rather than set whole new state
-            _pattern[mod1(i1, 12)] && display_bytes(sink_dots, rand(UInt8, 5))
-            _pattern[mod1(i2, 12)] && display_bytes(sink_2, rand(UInt8, 1))
+            clap_pattern[mod1(i1, 12)] &&
+                display_bytes(sink_dots, rand(0x00:0x7F, bytes_update_dots))
+            clap_pattern[mod1(i2, 12)] &&
+                display_bytes(sink_digits, rand(0x00:0x7F, bytes_update_digits))
             i1 += 1
             i2 += 1
             sleep(pause)
         end
         i2 += 1
     end
+end
+
+# https://en.wikipedia.org/wiki/Clapping_Music, idea by cpain
+# traditional pause (bpm = 160-180) is 0.1667-0.1875 sec
+function clapping_music(sink_dots, sink_digits; pause=0.1875)
+    # intro
+    display_bytes(sink_dots, text_to_dots_bytes("Clapping"))
+    display_bytes(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    sleep(3)
+    clear(sink_dots)
+    clear(sink_digits)
+    sleep(2)
+
+    # Play the thing!
+    _clapping_music(sink_dots, sink_digits; pause, num_repeats=4)
 
     # And roll credits
-    scroll_bytes(sink_dots,
-                 text_to_dots_bytes("Clapping Music by Steve Reich ... great idea CPayne! :D ");
-                 loopcount=1)
+    display_bytes(sink_digits, text_to_digits_bytes("       Steve  Reich  1972"))
+    scroll_bytes(sink_dots, text_to_dots_bytes("Clapping Music"); loopcount=1)
+    display_bytes(sink_dots, text_to_dots_bytes("Clapping"))
+    display_bytes(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
     return nothing
 end

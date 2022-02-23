@@ -76,5 +76,9 @@ clear(both_boards_sink)
 @log_board "Scroll digits on digits" scroll_bytes(digits_sink, msg_digits)
 clear(both_boards_sink)
 
+@info "Testing `clapping_music`"
+@log_board "Clapping subproject" _clapping_music(dots_sink, digits_sink; num_repeats=4,
+                                                 num_shifts=2)
+
 ## Drum examples :)
 # TODO: digits message
