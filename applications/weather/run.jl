@@ -6,6 +6,7 @@ Pkg.instantiate()
 
 @info "Loading dependencies..."
 using FlipBoard
+using Dates
 
 # Set up board
 # Board-specific setup
@@ -35,7 +36,7 @@ const CLOUD = map(FlipBoard.seg_to_bits,
 function _get_string_value(body, key; index=2)
     spl_body = split(body, "\"$key\": \"")
     if length(spl_body) < index
-        @warn "no can do str" key length(spl_body) index
+        @warn "no can do str" key length(spl_body) index now()
         return ""
     end
     return first(split(spl_body[index], "\","))
@@ -89,7 +90,11 @@ function _get_weather_icon_from_hourly(hourly_forecast)
     i = findfirst(1:24) do ind
         return contains(_get_string_value(hourly_forecast, "startTime"; index=ind), "T00")
     end
-    isnothing(i) && (i == 2)
+    if isnothing(i)
+        i = 2
+        @info "Not sure why hourly forecast didn't have startTime..." now()
+        @info hourly_forecast
+    end
     weather_str = lowercase(join(map(k -> _get_string_value(hourly_forecast,
                                                             "shortForecast"; index=k), 2:i)))
 
@@ -123,6 +128,7 @@ function format_weather(forecast, hourly_forecast)
 end
 
 function update_with_current_weather(; scroll_long_msg=true)
+    @info "Updating!" now()
     # Get weather
     bytes_static, bytes_scroll = format_weather(get_weather()...)
 
