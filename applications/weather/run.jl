@@ -142,18 +142,22 @@ function update_with_current_weather(; scroll_long_msg=true)
     return nothing
 end
 
-if isinteractive()
-    update_with_current_weather()
-else
-    # When running as script (not from REPL)...
-    # ...update every half hour until we tell it to stop
+function update_every_half_hour()
     update_pause_sec = 30 * 60
     scroll_long = true
     while true
         update_with_current_weather(; scroll_long_msg=scroll_long)
-        global scroll_long = false # Only scroll the first time
+        scroll_long = false # Only scroll the first time
         sleep(update_pause_sec)
         flash_reset(dots_sink)
     end
-    display_bytes(text_to_dots_bytes("Huzzah!"))
+    return nothing
+end
+
+if isinteractive()
+    update_with_current_weather()
+else
+    # When running as script (not from REPL)...
+    # ...update every half hour until we cancel the script
+    update_every_half_hour()
 end
