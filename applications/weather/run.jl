@@ -33,41 +33,9 @@ function setup_gpio()
     PI[] = Pi() #TODO: maybe need to `stop(PI[])` on exit
     return nothing
 end
-setup_gpio()
+
+setup_gpio()a
 set_mode(PI[], PIN_PUSH_BUTTON, PiGPIO.INPUT)
-
-# What is current in state?
-PiGPIO.read(PI[], PIN_PUSH_BUTTON)
-
-# # test callback (https://discourse.julialang.org/t/julia-pigpio-for-button-control/49862)
-# function gpioCallback(gpio, level, tick)
-#     @info "gpioCallback!" gpio level tick
-#     return nothing
-# end
-
-# ########
-
-# println("Testing callbacks")
-# cb = PiGPIO.Callback_ADT(PI[], PIN_PUSH_BUTTON, PiGPIO.FALLING_EDGE, gpioCallback)
-
-# # Piracy for bug fixing
-
-# function PiGPIO.Callback_ADT(self::Pi, user_gpio, edge=RISING_EDGE, func=nothing)
-#     return PiGPIO.Callback_ADT(self.notify, user_gpio, edge, func)
-# end
-
-# function PiGPIO.WaitForEdge(notify, gpio::Int, edge, timeout)
-#     callb = PiGPIO.Callback_ADT(gpio, edge, self.func)
-#     self = PiGPIO.WaitForEdge(notify, callb, false, time())
-#     push!(self.notify, self.callb)
-#     while (self.trigger == false) && ((time() - self.start) < timeout)
-#         time.sleep(0.05)
-#     end
-#     return self.notify.remove(self.callb)
-# end
-
-
-######
 
 # Icons!
 #TODO: move to fonts
@@ -213,4 +181,8 @@ else
     update_every_half_hour()
 end
 
-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
+
+
+
+# What is current in state?
+# PiGPIO.read(PI[], PIN_PUSH_BUTTON)
