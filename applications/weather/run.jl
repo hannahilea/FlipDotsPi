@@ -19,6 +19,7 @@ shared_srl = Sys.islinux() ? open_srl(; portname="/dev/ttyS0", baudrate=57600) :
 dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
 
 # Set up GPIO
+@info "Setting up GPIO..."
 const PIN_PUSH_BUTTON = 27 # For mapping see: https://abyz.me.uk/rpi/pigpio/#Type_3 plus https://pi4j.com/1.2/pins/model-zerow-rev1.html
 init_gpio()
 gpio_set_mode(PIN_PUSH_BUTTON, :in)
@@ -149,9 +150,12 @@ function update_with_current_weather(; scroll_long_msg=true)
 end
 
 function update_every_half_hour()
+    @info "Running per-half-hour update; push button for immediate update..."
     last_set = now()
     while true
         if gpio_read(PIN_PUSH_BUTTON)
+            @info "Button pressed!"
+            display_bytes(dots_sink, text_to_dots_bytes("..."; loopcount=1))
             update_with_current_weather(; scroll_long_msg=true)
         elseif Dates.minute(now()) % 30 == 0 && round(now() - last_set, Minute) > Minute(4)
             last_set = now()
@@ -162,11 +166,15 @@ function update_every_half_hour()
     return nothing
 end
 
-if isinteractive()
-    update_with_current_weather()
-else
-    # When running as script (not from REPL)...
-    # ...update every half hour until we cancel the script
-    update_with_current_weather(; scroll_long_msg=true)
-    update_every_half_hour()
-end
+# ...update every half hour until we cancel the script
+update_with_current_weather(; scroll_long_msg=true)
+update_every_half_hour()
+
+# WORKS
+# while true
+#     if gpio_read(PIN_PUSH_BUTTON)
+#         display_bytes(dots_sink, text_to_dots_bytes("on"))
+#     else
+#         display_bytes(dots_sink, text_to_dots_bytes("off"))
+#     end
+# end
