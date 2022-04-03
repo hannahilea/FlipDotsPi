@@ -7,7 +7,7 @@ Pkg.instantiate()
 @info "Loading dependencies..."
 using FlipBoard
 using Dates
-using PiGPIO
+using BaremetalPi
 
 # Set up board
 # Board-specific setup
@@ -18,63 +18,18 @@ using PiGPIO
 shared_srl = Sys.islinux() ? open_srl(; portname="/dev/ttyS0", baudrate=57600) : IOBuffer()
 dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
 
-# Set up PiGPIO
-# Copied from https://github.com/hannahilea/HannexPi/blob/master/src/pi_utils.jl
-const PI = Ref{Union{Nothing,Any}}(nothing)
+# Set up GPIO
 const PIN_PUSH_BUTTON = 27 # For mapping see: https://abyz.me.uk/rpi/pigpio/#Type_3 plus https://pi4j.com/1.2/pins/model-zerow-rev1.html
 
-function setup_gpio()
-    occursin("Raspberry Pi", read(`cat /proc/device-tree/model`, String)) || error("Failing Pi setup---this is not a Pi!!")
-    try
-        run(`sudo pigpiod`)
-    catch
-        # Will fail if daemon is already running---which is fine!
-    end
-    PI[] = Pi() #TODO: maybe need to `stop(PI[])` on exit
-    return nothing
-end
-setup_gpio()
-set_mode(PI[], PIN_PUSH_BUTTON, PiGPIO.INPUT)
-
-# What is current in state?
-PiGPIO.read(PI[], PIN_PUSH_BUTTON)
-
-# # test callback (https://discourse.julialang.org/t/julia-pigpio-for-button-control/49862)
-# function gpioCallback(gpio, level, tick)
-#     @info "gpioCallback!" gpio level tick
-#     return nothing
-# end
-
-# ########
-
-# println("Testing callbacks")
-# cb = PiGPIO.Callback_ADT(PI[], PIN_PUSH_BUTTON, PiGPIO.FALLING_EDGE, gpioCallback)
-
-# # Piracy for bug fixing
-
-# function PiGPIO.Callback_ADT(self::Pi, user_gpio, edge=RISING_EDGE, func=nothing)
-#     return PiGPIO.Callback_ADT(self.notify, user_gpio, edge, func)
-# end
-
-# function PiGPIO.WaitForEdge(notify, gpio::Int, edge, timeout)
-#     callb = PiGPIO.Callback_ADT(gpio, edge, self.func)
-#     self = PiGPIO.WaitForEdge(notify, callb, false, time())
-#     push!(self.notify, self.callb)
-#     while (self.trigger == false) && ((time() - self.start) < timeout)
-#         time.sleep(0.05)
-#     end
-#     return self.notify.remove(self.callb)
-# end
-
-
-######
+init_gpio()
+gpio_set_mode(PIN_PUSH_BUTTON, :in)
 
 # Icons!
 #TODO: move to fonts
 const SNOW = map(FlipBoard.seg_to_bits,
                  [[3, 5], [4], [1, 3, 4, 5, 7], [2, 3, 5, 6], [1, 3, 4, 5, 7], [4], [3, 5]])
 const SUN = map(FlipBoard.seg_to_bits,
-                [[4], [2, 4, 6], [3, 4, 5], [1, 2, 3, 5, 6, 7], [3, 4, 5], [2, 4, 6], [4]])
+                [[4], [2, 4, 6], [3, 4, 5], [1, 2, 3, 4, 5, 6, 7], [3, 4, 5], [2, 4, 6], [4]])
 const RAIN = map(FlipBoard.seg_to_bits,
                  [[2], [1, 2, 3, 5, 7], [1, 2, 3], [1, 2, 3, 5, 7], [1, 2, 3],
                   [1, 2, 3, 5, 7], [2]])
@@ -184,6 +139,7 @@ function update_with_current_weather(; scroll_long_msg=true)
     bytes_static, bytes_scroll = format_weather(get_weather()...)
 
     # Display it!
+    flash_reset(dots_sink)
     if scroll_long_msg
         @info "Displaying scrolling output..."
         scroll_bytes(dots_sink, bytes_scroll; loopcount=1)
@@ -194,13 +150,15 @@ function update_with_current_weather(; scroll_long_msg=true)
 end
 
 function update_every_half_hour()
-    update_pause_sec = 30 * 60
-    scroll_long = true
+    last_set = now()
     while true
-        update_with_current_weather(; scroll_long_msg=scroll_long)
-        scroll_long = false # Only scroll the first time
-        sleep(update_pause_sec)
-        flash_reset(dots_sink)
+        if gpio_read(PIN_PUSH_BUTTON)
+            update_with_current_weather(; scroll_long_msg=true)
+        elseif Dates.minute(now()) % 30 == 0 && round(now() - last_set, Minute) > Minute(4)
+            last_set = now()
+            update_with_current_weather(; scroll_long_msg=false)
+        end
+        sleep(0.2) # half second polling
     end
     return nothing
 end
@@ -210,7 +168,12 @@ if isinteractive()
 else
     # When running as script (not from REPL)...
     # ...update every half hour until we cancel the script
+    update_with_current_weather(; scroll_long_msg=true)
     update_every_half_hour()
 end
 
-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
+
+
+
+# What is current in state?
+# gpio_read(PIN_PUSH_BUTTON)
