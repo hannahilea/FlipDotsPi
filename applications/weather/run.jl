@@ -7,6 +7,7 @@ Pkg.instantiate()
 @info "Loading dependencies..."
 using FlipBoard
 using Dates
+using PiGPIO
 
 # Set up board
 # Board-specific setup
@@ -15,8 +16,58 @@ using Dates
 # the relevant serial port!
 @info "Setting up serial port..."
 shared_srl = Sys.islinux() ? open_srl(; portname="/dev/ttyS0", baudrate=57600) : IOBuffer()
-
 dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
+
+# Set up PiGPIO
+# Copied from https://github.com/hannahilea/HannexPi/blob/master/src/pi_utils.jl
+const PI = Ref{Union{Nothing,Any}}(nothing)
+const PIN_PUSH_BUTTON = 27 # For mapping see: https://abyz.me.uk/rpi/pigpio/#Type_3 plus https://pi4j.com/1.2/pins/model-zerow-rev1.html
+
+function setup_gpio()
+    occursin("Raspberry Pi", read(`cat /proc/device-tree/model`, String)) || error("Failing Pi setup---this is not a Pi!!")
+    try
+        run(`sudo pigpiod`)
+    catch
+        # Will fail if daemon is already running---which is fine!
+    end
+    PI[] = Pi() #TODO: maybe need to `stop(PI[])` on exit
+    return nothing
+end
+setup_gpio()
+set_mode(PI[], PIN_PUSH_BUTTON, PiGPIO.INPUT)
+
+# What is current in state?
+PiGPIO.read(PI[], PIN_PUSH_BUTTON)
+
+# # test callback (https://discourse.julialang.org/t/julia-pigpio-for-button-control/49862)
+# function gpioCallback(gpio, level, tick)
+#     @info "gpioCallback!" gpio level tick
+#     return nothing
+# end
+
+# ########
+
+# println("Testing callbacks")
+# cb = PiGPIO.Callback_ADT(PI[], PIN_PUSH_BUTTON, PiGPIO.FALLING_EDGE, gpioCallback)
+
+# # Piracy for bug fixing
+
+# function PiGPIO.Callback_ADT(self::Pi, user_gpio, edge=RISING_EDGE, func=nothing)
+#     return PiGPIO.Callback_ADT(self.notify, user_gpio, edge, func)
+# end
+
+# function PiGPIO.WaitForEdge(notify, gpio::Int, edge, timeout)
+#     callb = PiGPIO.Callback_ADT(gpio, edge, self.func)
+#     self = PiGPIO.WaitForEdge(notify, callb, false, time())
+#     push!(self.notify, self.callb)
+#     while (self.trigger == false) && ((time() - self.start) < timeout)
+#         time.sleep(0.05)
+#     end
+#     return self.notify.remove(self.callb)
+# end
+
+
+######
 
 # Icons!
 #TODO: move to fonts
@@ -161,3 +212,5 @@ else
     # ...update every half hour until we cancel the script
     update_every_half_hour()
 end
+
+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
