@@ -136,13 +136,6 @@ srl = LibSerialPort.open("/dev/ttyS0", 57600; mode=SP_MODE_WRITE)
 ```
 ...this doesn't do anything yet, but it also shouldn't error.
 
-### PiGPIO Setup
-
-If you want to use any gpIO triggers (buttons, switches, etc), e.g. in the `applicaitons/bus-timing/` app, you'll need to additionally install the GPIO daemon (required for Julia's PiGPIO.jl):
-```
-sudo apt install pigpio
-```
-
 ### Additional Pi configuration
 
 If you want to use do any additional development, including cloning this repo, you may want to set up some combination of git and tmux. If not, you can skip this section.

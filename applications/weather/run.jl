@@ -20,7 +20,6 @@ dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
 
 # Set up GPIO
 const PIN_PUSH_BUTTON = 27 # For mapping see: https://abyz.me.uk/rpi/pigpio/#Type_3 plus https://pi4j.com/1.2/pins/model-zerow-rev1.html
-
 init_gpio()
 gpio_set_mode(PIN_PUSH_BUTTON, :in)
 
@@ -171,9 +170,3 @@ else
     update_with_current_weather(; scroll_long_msg=true)
     update_every_half_hour()
 end
-
-
-
-
-# What is current in state?
-# gpio_read(PIN_PUSH_BUTTON)
