@@ -17,12 +17,17 @@ using BaremetalPi
 @info "Setting up serial port..."
 shared_srl = Sys.islinux() ? open_srl(; portname="/dev/ttyS0", baudrate=57600) : IOBuffer()
 dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
+digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
 
 # Set up GPIO
 @info "Setting up GPIO..."
 const PIN_PUSH_BUTTON = 27 # For mapping see: https://abyz.me.uk/rpi/pigpio/#Type_3 plus https://pi4j.com/1.2/pins/model-zerow-rev1.html
 init_gpio()
 gpio_set_mode(PIN_PUSH_BUTTON, :in)
+
+#####
+##### Weather
+#####
 
 # Icons!
 #TODO: move to fonts
@@ -149,6 +154,23 @@ function update_with_current_weather(; scroll_long_msg=true)
     return nothing
 end
 
+#####
+##### Date 
+#####
+
+function update_with_current_date()
+    t = Dates.today()
+    _lpad = (str) -> lpad(str, 7 - length(str))
+    date_str = string(_lpad(string(day(t), " ", monthabbr(t))), _lpad(""), _lpad(dayabbr(t)))
+    bytes = text_to_digits_bytes(date_str)
+    display_bytes(dots_sink, bytes)
+    return nothing
+end
+
+#####
+##### Main entrypoint
+#####
+
 function update_every_half_hour()
     @info "Running per-half-hour update; push button for immediate update..."
     last_set = now()
@@ -160,6 +182,7 @@ function update_every_half_hour()
         elseif Dates.minute(now()) % 30 == 0 && round(now() - last_set, Minute) > Minute(4)
             last_set = now()
             update_with_current_weather(; scroll_long_msg=false)
+            update_with_current_date()
         end
         sleep(0.2) # half second polling
     end
@@ -168,6 +191,7 @@ end
 
 # ...update every half hour until we cancel the script
 update_with_current_weather(; scroll_long_msg=true)
+update_with_current_date()
 update_every_half_hour()
 
 # WORKS
