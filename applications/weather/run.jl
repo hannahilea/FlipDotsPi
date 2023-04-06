@@ -85,7 +85,7 @@ function get_weather(; location="42.3876,-71.0995")
         return forecast_result, hourly_result
     catch e
         @warn "Uh oh unable to get weather" e
-        return missing
+        return missing, missing
     end
 end
 
@@ -115,7 +115,7 @@ function _get_weather_icon_from_hourly(hourly_forecast)
 end
 
 # Return short form, long form
-format_weather(::Any) = ("N/A", "Unable to fetch weather")
+format_weather(::Missing, ::Missing) = ("N/A", "Unable to fetch weather")
 
 function format_weather(forecast, hourly_forecast)
     @info "Formatting output..."
