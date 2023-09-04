@@ -160,12 +160,12 @@ end
 
 function update_with_current_date()
     t = Dates.today()
-    _lpad = (str) -> rpad(str, 7)
+    _rpad = (str) -> rpad(str, 7)
 
-    m = length(month(t)) > 7 ? monthabbr(t) : monthname(t)
+    m = length(monthname(t)) > 7 ? monthabbr(t) : monthname(t)
     d = length(dayname(t)) > 7 ? dayabbr(t) : dayname(t)
 
-    date_str = join(_lpad.([day(t), m, d]))
+    date_str = join(_rpad.([day(t), m, d]))
     bytes = text_to_digits_bytes(date_str)
     display_bytes(digits_sink, bytes)
     return nothing
