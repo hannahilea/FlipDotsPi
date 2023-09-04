@@ -111,6 +111,7 @@ function _get_weather_icon_from_hourly(hourly_forecast)
 
     contains(weather_str, "snow") && return SNOW
     contains(weather_str, "rain") && return RAIN
+    contains(weather_str, "shower") && return RAIN
 
     if _get_bool_value(hourly_forecast, "isDaytime")
         return contains(lowercase(_get_string_value(hourly_forecast, "shortForecast")),
