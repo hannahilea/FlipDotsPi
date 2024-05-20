@@ -8,6 +8,8 @@ Pkg.instantiate()
 using FlipBoard
 using Dates
 
+DEFAULT_LOCATION = "42.3876,-71.0995" # Update with desired lat/long
+
 # Set up board
 # Board-specific setup
 # Hacky check to see if we're on the pi, to prevent trying to connect to port that
@@ -60,14 +62,14 @@ function _get_bool_value(body, key; index=2)
     return lowercase(first(split(spl_body[index], ","))) == "true"
 end
 
-# Set up weather; default loc_str is Somerville, MA
-function get_weather(; location="42.3876,-71.0995")
+# Set up weather
+function get_weather(; location=DEFAULT_LOCATION)
     try
         @debug "Getting weather..." "https://api.weather.gov/points/$location"
         @info "Fetching forecast links..."
         data = read(`curl "https://api.weather.gov/points/$location"`, String)
 
-        # Normally would use JSON to parse this...but for pi, really don't want
+        # Normally would use JSON to parse this...and HTTP.jl. but for pi, really don't want
         # all of those dependencies. So! Doing it the stupid brittle way here :)
         forecast_url = _get_string_value(data, "forecast")
         hourly_url = _get_string_value(data, "forecastHourly")
