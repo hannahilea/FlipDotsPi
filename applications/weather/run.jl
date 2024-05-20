@@ -67,7 +67,7 @@ function get_weather(; location="42.3876,-71.0995")
         @info "Fetching forecast links..."
         data = read(`curl "https://api.weather.gov/points/$location"`, String)
 
-        # Normally would use JSON to parse this...but for pi, really don't want
+        # Normally would use JSON to parse this...and HTTP.jl. but for pi, really don't want
         # all of those dependencies. So! Doing it the stupid brittle way here :)
         forecast_url = _get_string_value(data, "forecast")
         hourly_url = _get_string_value(data, "forecastHourly")
