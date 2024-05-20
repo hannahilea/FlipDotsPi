@@ -1,33 +1,31 @@
-# FlipDotsPi
+# Flip Board Pi
 
-Code to support running various applications (including a realtime weather monitor) on [AlphaZeta flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays. 
+Code to support running various applications---including a realtime weather monitor---on a flip board such as [AlphaZeta's flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays!
 
-This repository contains the following, each of which is relatively orthogonal and could be used in isolation:
+Includes:
+
+- **Basic text display**, for both scrolling and static messages! See [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md).
+
+- **Realtime [weather display](./applications/weather/README.md)**!
+
+- **Play Steve Reich's "Clapping Music"**! See the [FlipBoard.jl tour](FlipBoard.jl/scripts/tour.jl) for instructions.
+
+This repository contains the following, each of which is relatively orthogonal and use-case specific:
 - [Set-up instructions for the AlphaZeta-provided Raspberry Pi Zero](#raspberry-pi-zero-configuration), to enable running custom applications on an AlphaZeta board
-- [Set-up instructions for installing Julia](#install-julia-on-raspberry-pi-zero) and requisite [serial port dependencies](#build-and-install-julia-serial-port-dependencies) on a RaspberryPi Zero, to support running Julia applications that send serial commands (e.g., to a board) 
+- [Set-up instructions for installing Julia](#install-julia-on-raspberry-pi-zero) and requisite [serial port dependencies](#build-and-install-julia-serial-port-dependencies) on the RaspberryPi Zero, to support running Julia applications that send serial commands (e.g., to a board) 
 - [FlipBoard.jl](FlipBoard.jl), a lightweight Julia library for generating and sending display updates over a serial port
-- [FlipBoardApps.jl](FlipBoardApps.jl), a set of applications designed to run on a flip board; includes a realtime weather and date display. For list of all supported apps, see TODO
+- A set of [applications](/applications) designed to run on one or more flip boards.
 
-### Details:
-- The Raspberry Pi board used here is a Raspberry Pi Zero (Pi0), as provided by AlphaZeta; setup instructions may need tweaking for other board models.
-- The flip boards here are 7x28 AlphaZeta displays; setup instructions may need tweaking for other models/brands. 
-    - The FlipBoard.jl library was written to be board-agnostic, so should be relatively easy to extend to support new boards with different communication protocols.
-- The Julia/Pi0 limitations were accurate at time of project set-up (~2022) and may no longer be valid at time of reading, as the set-up portion of this project is not under active development/improvement.
+#### Specifics
+The Raspberry Pi board used here is a Raspberry Pi Zero (Pi0), as provided by AlphaZeta; setup instructions may need tweaking for other board models.
+
+The flip boards here are 7x28 AlphaZeta displays; setup instructions may need tweaking for other models/brands. 
+
+The FlipBoard.jl library was written to be board-agnostic, so should be relatively easy to extend to support new boards with different communication protocols.
+
+The Julia/Pi0 limitations were accurate at time of project set-up (~2022) and may no longer be valid at time of reading, as the set-up portion of this project is not under active development/improvement.
 
 Feel free to open a pull request with any documentation clarifications or improvements!
-
-## Applications
-Functionality supported by this repository, once the following [one-time setup steps](#one-time-setup-instructions) have been followed:
-
-- **Basic message display**, scrolling and static. See [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md)!
-
-- **Realtime weather display**! Do
-    ```
-    julia --project=applications/weather applications/weather/run.jl
-    ```
-    (Update the in-script constant to generate weather reports for your location.)
-
-- **Play Steve Reich's "Clapping Music"**. See the [FlipBoard.jl tour](FlipBoard.jl/scripts/tour.jl) for instructions.
 
 ## One-time setup instructions
 
