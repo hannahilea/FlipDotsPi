@@ -154,10 +154,12 @@ To send messages to the display from Julia, we'll use [LibSerialPort.jl](https:/
 
 7. Try it! From Julia, do:
     ```julia
+    using Pkg
+    Pkg.add("LibSerialPort")
     using LibSerialPort
     srl = LibSerialPort.open("/dev/ttyS0", 57600; mode=SP_MODE_WRITE)
     ```
-    ...this doesn't do anything yet, but if your system isn't configured correctly it will likely error.
+    ...this doesn't do anything yet, but unless your system is configured correctly (**and the Pi is connected to the Flip Board!!**) it will likely error.
 
 
 ### Additional Pi configuration
