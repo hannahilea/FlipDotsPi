@@ -1,7 +1,8 @@
 module FlipBoard
 
-export open_srl, AlphaZetaSrl, all_alphazeta, scroll_bytes, flash_reset,
-       all_bright, all_dark, clear, text_to_digits_bytes, text_to_dots_bytes, display_bytes
+export open_srl, AlphaZetaSrl, all_alphazeta, scroll_bytes, flash_reset, all_bright,
+       all_dark, clear, text_to_digits_bytes, text_to_dots_bytes, display_bytes,
+       clapping_music
 
 using LibSerialPort
 
