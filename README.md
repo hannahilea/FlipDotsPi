@@ -161,7 +161,6 @@ To send messages to the display from Julia, we'll use [LibSerialPort.jl](https:/
     ```
     ...this doesn't do anything yet, but unless your system is configured correctly (**and the Pi is connected to the Flip Board!!**) it will likely error.
 
-
 ### Additional Pi configuration
 
 If you want to use do any additional development on your board, including cloning this repo (to, e.g., run any of the included applications), you may want to set up some combination of git and tmux. If not, you can skip this section!
