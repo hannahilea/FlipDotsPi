@@ -6,6 +6,7 @@ Pkg.instantiate()
 
 @info "Loading dependencies..."
 using FlipBoard
+using FlipBoard: DOTS_SNOW, DOTS_SUN, DOTS_RAIN, DOTS_NIGHT, DOTS_CLOUD
 using Dates
 
 DEFAULT_LOCATION = "42.3876,-71.0995" # Update with desired lat/long
@@ -19,20 +20,6 @@ DEFAULT_LOCATION = "42.3876,-71.0995" # Update with desired lat/long
 shared_srl = Sys.islinux() ? open_srl(; portname="/dev/ttyS0", baudrate=57600) : IOBuffer()
 
 dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
-
-# Icons!
-#TODO: move to fonts
-const SNOW = map(FlipBoard.seg_to_bits,
-                 [[3, 5], [4], [1, 3, 4, 5, 7], [2, 3, 5, 6], [1, 3, 4, 5, 7], [4], [3, 5]])
-const SUN = map(FlipBoard.seg_to_bits,
-                [[4], [2, 4, 6], [3, 4, 5], [1, 2, 3, 5, 6, 7], [3, 4, 5], [2, 4, 6], [4]])
-const RAIN = map(FlipBoard.seg_to_bits,
-                 [[2], [1, 2, 3, 5, 7], [1, 2, 3], [1, 2, 3, 5, 7], [1, 2, 3],
-                  [1, 2, 3, 5, 7], [2]])
-const NIGHT = map(FlipBoard.seg_to_bits,
-                  [[3, 4, 5], [2, 6], [1, 7], [1, 3, 4, 5, 7], [1, 2, 6, 7], [2, 6]])
-const CLOUD = map(FlipBoard.seg_to_bits,
-                  [[5, 6], [3, 4, 6], [2, 6], [3, 6], [4, 6], [4, 6], [5, 6]])
 
 # hacky JSON parser substitute
 function _get_string_value(body, key; index=2)
@@ -100,14 +87,14 @@ function _get_weather_icon_from_hourly(hourly_forecast)
     weather_str = lowercase(join(map(k -> _get_string_value(hourly_forecast,
                                                             "shortForecast"; index=k), 2:i)))
 
-    contains(weather_str, "snow") && return SNOW
-    contains(weather_str, "rain") && return RAIN
+    contains(weather_str, "snow") && return DOTS_SNOW
+    contains(weather_str, "rain") && return DOTS_RAIN
 
     if _get_bool_value(hourly_forecast, "isDaytime")
         return contains(lowercase(_get_string_value(hourly_forecast, "shortForecast")),
-                        "sun") ? SUN : CLOUD
+                        "sun") ? DOTS_SUN : DOTS_CLOUD
     end
-    return NIGHT
+    return DOTS_NIGHT
 end
 
 # Return short form, long form

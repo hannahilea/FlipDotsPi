@@ -34,7 +34,7 @@ Sink for AlphaZeta board (of any type) with `address` connected to `srl`.
 - `num_msg_bytes::Int`: Set the number of data bytes the display expects with
         each message. Default is 28, for 7x28 dots board OR 28-digit 7-seg digit display.
 """
-Base.@kwdef struct AlphaZetaSrl #<: AbstractSink
+Base.@kwdef struct AlphaZetaSrl
     address::UInt8
     srl::Union{SerialPort,IOBuffer}
     command::UInt8 = 0x83
@@ -116,13 +116,6 @@ end
 #####
 ##### Utils
 #####
-
-# Useful for creating fonts
-function seg_to_bits(i_segs::AbstractVector)
-    bitstr = zeros(Int, 8)
-    foreach(i -> bitstr[i] = 1, i_segs)
-    return parse(UInt8, reverse(join(bitstr)); base=2)
-end
 
 include("fonts.jl")
 include("extras.jl")
