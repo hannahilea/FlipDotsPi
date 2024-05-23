@@ -103,7 +103,7 @@ function _get_weather_icon_from_hourly(hourly_forecast)
 end
 
 # Return short form, long form
-format_weather(::Missing, ::Missing) = ("N/A", "Unable to fetch weather")
+format_weather(::Missing, ::Missing) = (text_to_dots_bytes("-"), text_to_dots_bytes("Unable to fetch weather"))
 
 function format_weather(forecast, hourly_forecast)
     @info "Formatting output..."
@@ -124,6 +124,7 @@ end
 function update_with_current_weather(; scroll_long_msg=true)
     @info "Updating!" now()
     # Get weather
+    #TODO-handle separately, handle 'missing' appropriately
     bytes_static, bytes_scroll = format_weather(get_weather()...)
 
     # Display it!

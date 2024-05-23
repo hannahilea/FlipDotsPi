@@ -1,8 +1,6 @@
 # Flip Board Pi
 
-Code to support running various applications---including a realtime weather monitor---on a flip board such as [AlphaZeta's flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays!
-
-Includes:
+Code to support running various applications---including a realtime weather monitor---on a flip board such as [AlphaZeta's flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays. Includes:
 
 - **Basic text display**, for both scrolling and static messages! See [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md).
 
