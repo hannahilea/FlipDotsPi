@@ -1,13 +1,28 @@
 ## Run FlipBoard.jl from the command line to scroll a single message
-
-# Safety first
+@info "Setting up environment..."
 using Pkg
-if Pkg.project().name != "FlipBoard"
-    @warn "Not running from w/in FlipBoard.jl environment; activate environment before running."
+Pkg.resolve()
+Pkg.instantiate()
+
+@info "Loading dependencies..."
+using ArgParse
+using FlipBoard
+
+# Set up flipboard serial communication
+# For this app, we're communicating with two boards: one flipdots (for weather) 
+# and one flipdigits (for date). If only one is present, the script will still run 
+@info "Setting up serial port for flip boards..."
+shared_srl = missing
+try
+    shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
+catch
+    @warn "No serial port found; ensure board is connected and/or portnmae is correct"
 end
 
-using FlipBoard
-using ArgParse
+dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
+digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
+
+######
 
 function parse_commandline()
     s = ArgParseSettings(;
@@ -47,18 +62,27 @@ function parse_commandline()
     return parse_args(s)
 end
 
-# ...when running as script (not from REPL):
-if !isinteractive()
+function main()
     d = parse_commandline()
     args = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
     args.verbose && println("Parsed args: $args")
 
-    # Set up
-    srl = open_srl(; portname=args.portname, baudrate=args.baudrate)
-    sink = AlphaZetaSrl(; address=args.address, srl)
+    @info "Setting up serial port for flip boards..."
+    srl = missing
+    try
+        srl = open_srl(; portname=args.portname, baudrate=args.baudrate)
+    catch
+        @warn "No serial port found; ensure board is connected and/or portname is correct"
+    end
 
-    msg = args.displaytype == "digits" ? text_to_digits_bytes(args.message) :
-          text_to_dots_bytes(args.message)
+    sink = args.displaytype == "digits" ? AZDigitsSink(; address=args.address, srl) :
+           AZDotsSink(; address=args.address, srl)
+    msg = text_to_bytes(sink, args.message)
+
     args.loopcount < 1 ? display_bytes(sink, msg) :
-        scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
+    scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
+    return nothing
 end
+
+# ...when running as script (not from REPL):
+isinteractive() || main()
