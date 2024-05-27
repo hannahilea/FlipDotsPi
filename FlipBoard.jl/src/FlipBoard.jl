@@ -8,9 +8,9 @@ using LibSerialPort
 
 const CURRENTLY_OPEN_SERIAL_PORTS = Dict{Tuple{String,Int64},SerialPort}()
 
-##########
-########## AlphaZeta setup
-##########
+#####
+##### AlphaZeta setup
+#####
 
 """
     AlphaZetaSerialPortConfig(; address::UInt8, serial_port::SerialPort, command::UInt8=0x83, 
@@ -19,8 +19,8 @@ const CURRENTLY_OPEN_SERIAL_PORTS = Dict{Tuple{String,Int64},SerialPort}()
 Sink config for AlphaZeta board (of any type) with `address` connected to `srl`.
 
 # Arguments
-- `srl::Union{SerialPort,IOBuffer}`: Should be a SerialPort when running from a pi;
-        the IOBuffer option is so support testing.
+- `serial_port`: Should be a `SerialPort` when running from a pi; other valid options
+        are an IOBuffer (for testing) or `missing`.
 - `command::UInt8`: Set the display mode for the given display:
     - 0x81 - 112 bytes / no refresh / C+3E
     - 0x82 - refresh
@@ -122,9 +122,9 @@ function open_srl_iff_available(; portname, baudrate)
     end
 end
 
-##########
-########## Construct various byte messages
-##########
+#####
+##### Construct various byte messages
+#####
 
 """
     all_bright(sink)

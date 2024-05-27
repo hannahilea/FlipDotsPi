@@ -1,6 +1,6 @@
-##########
-########## Fun stuff
-##########
+#####
+##### Fun stuff
+#####
 
 function scroll_message(sink, message; kwargs...)
     return scroll_bytes(sink, text_to_bytes(sink, message); kwargs...)
