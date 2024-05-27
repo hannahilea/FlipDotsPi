@@ -1,7 +1,8 @@
 module FlipBoard
 
-export open_srl, all_alphazeta_sink, scroll_bytes, flash_reset, all_bright,
-       all_dark, clear, display, clapping_music, AZDotsSink, AZDigitsSink, AZSinks
+export open_srl, open_srl_iff_available, all_alphazeta_sink, scroll_bytes, flash_reset,
+       all_bright,  all_dark, clear, display, clapping_music, AZDotsSink, AZDigitsSink, 
+       AZSinks, text_to_bytes
 
 using LibSerialPort
 
@@ -32,17 +33,25 @@ Sink config for AlphaZeta board (of any type) with `address` connected to `srl`.
 """
 Base.@kwdef struct AlphaZetaSerialPortConfig
     address::UInt8
-    serial_port::Union{SerialPort,IOBuffer}
+    serial_port::Any
     command::UInt8 = 0x83
     num_msg_bytes::Int = 28
 end
 
-Base.@kwdef struct AZDotsSink
+struct AZDotsSink
     serial_port_config::AlphaZetaSerialPortConfig
 end
 
-Base.@kwdef struct AZDigitsSink
+function AZDotsSink(; kwargs...)
+    return AZDotsSink(AlphaZetaSerialPortConfig(; kwargs...))
+end
+
+struct AZDigitsSink
     serial_port_config::AlphaZetaSerialPortConfig
+end
+
+function AZDigitsSink(; kwargs...)
+    return AZDigitsSink(AlphaZetaSerialPortConfig(; kwargs...))
 end
 
 const AZSinks = Union{AZDotsSink,AZDigitsSink}
@@ -68,13 +77,14 @@ function display(sink::AlphaZetaSerialPortConfig, byte_msg::AbstractVector{UInt8
     return nothing
 end
 
-write_serial_transmission(serial_port, transmission) = write(serial_port, transmission) 
+write_serial_transmission(serial_port, transmission) = write(serial_port, transmission)
 write_serial_transmission(::Missing, transmission) = nothing
 
 """
     display(sink, message::AbstractString)
 
-Write `message` to `sink` after converting to message to bytes via [`text_to_bytes`](@ref).
+Write `message` to `sink` after converting to message to bytes via [`
+`](@ref).
 """
 function display(sink, message::AbstractString)
     message_bytes = text_to_bytes(sink, message)
@@ -92,12 +102,21 @@ all_alphazeta_sink(serial_port) = AlphaZetaSerialPort(; address=0xFF, serial_por
     open_srl(; portname, baudrate)
 
 If it already exists, return it; if it doesn't, make
-and open it.
+and open it. If no serial port available, return `missing`.
 """
 function open_srl(; portname, baudrate)
     key = (portname, baudrate)
     return get!(CURRENTLY_OPEN_SERIAL_PORTS, key) do
         return LibSerialPort.open(portname, baudrate; mode=SP_MODE_WRITE)
+    end
+end
+
+function open_srl_iff_available(; portname, baudrate)
+    try
+        return open_srl(; portname, baudrate)
+    catch
+        @warn "No serial port connected; ensure port name is correct and serial connection is present"
+        return missing
     end
 end
 

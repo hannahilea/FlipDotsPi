@@ -39,7 +39,7 @@ function _get_bool_value(body, key; index=2)
 end
 
 # Set up weather
-function get_weather(; location=DEFAULT_LOCATION)
+function get_weather(; location)
     try
         @debug "Getting weather..." "https://api.weather.gov/points/$location"
         @info "Fetching forecast links..."
@@ -88,12 +88,12 @@ function _get_weather_icon_from_hourly(hourly_forecast)
 end
 
 # Return short form, long form
-format_weather(::Missing, ::Missing) = (text_to_dots_bytes("-"), text_to_dots_bytes("Unable to fetch weather"))
+format_weather(sink, ::Missing, ::Missing) = (text_to_bytes(sink, "-"), text_to_bytes(sink, "Unable to fetch weather"))
 
-function format_weather(forecast, hourly_forecast)
+function format_weather(sink, forecast, hourly_forecast)
     @info "Formatting output..."
     weather_icon = _get_weather_icon_from_hourly(hourly_forecast)
-    short_str = vcat(text_to_dots_bytes(string("   ",
+    short_str = vcat(text_to_bytes(sink, string("   ",
                                                _get_int_value(hourly_forecast,
                                                               "temperature"), "°")),
                      weather_icon)
@@ -103,23 +103,23 @@ function format_weather(forecast, hourly_forecast)
                       _get_string_value(forecast, "name"; index=3), ": ",
                       _get_string_value(forecast, "shortForecast"; index=3), "!")
     @info "\t-> $(long_str)"
-    return short_str, text_to_dots_bytes(long_str)
+    return short_str, text_to_bytes(sink, long_str)
 end
 
-function update_with_current_weather(; scroll_long_msg=true)
+function update_with_current_weather(sink; scroll_long_msg=true, location)
     @info "Updating!" now()
     # Get weather
     #TODO-handle separately, handle 'missing' appropriately
-    bytes_static, bytes_scroll = format_weather(get_weather()...)
+    bytes_static, bytes_scroll = format_weather(sink, get_weather(; location)...)
 
     # Display it!
-    flash_reset(dots_sink)
+    flash_reset(sink)
     if scroll_long_msg
         @info "Displaying scrolling output..."
-        scroll_bytes(dots_sink, bytes_scroll; loopcount=1)
+        scroll_bytes(sink, bytes_scroll; loopcount=1)
     end
     @info "Displaying static output..."
-    display_bytes(dots_sink, bytes_static)
+    display(sink, bytes_static)
     return nothing
 end
 
@@ -127,7 +127,7 @@ end
 ##### Date 
 #####
 
-function update_with_current_date()
+function update_with_current_date(sink)
     t = Dates.today()
     _rpad = (str) -> rpad(str, 7)
 
@@ -135,8 +135,8 @@ function update_with_current_date()
     d = length(dayname(t)) > 7 ? dayabbr(t) : dayname(t)
 
     date_str = join(_rpad.([day(t), m, d]))
-    bytes = text_to_digits_bytes(date_str)
-    display_bytes(digits_sink, bytes)
+    bytes = text_to_bytes(sink, date_str)
+    display(sink, bytes)
     return nothing
 end
 
@@ -145,14 +145,14 @@ end
 ##### Main entrypoint
 #####
 
-function update_every_half_hour()
+function update_every_half_hour(dots_sink, digits_sink; location)
     @info "Running per-half-hour update"
     last_set = now()
     while true
         if Dates.minute(now()) % 30 == 0 && round(now() - last_set, Minute) > Minute(4)
             last_set = now()
-            update_with_current_weather(; scroll_long_msg=false)
-            update_with_current_date()
+            update_with_current_weather(dots_sink; scroll_long_msg=false, location)
+            update_with_current_date(digits_sink)
             @info "okay"
         end
         sleep(0.2) # half second polling

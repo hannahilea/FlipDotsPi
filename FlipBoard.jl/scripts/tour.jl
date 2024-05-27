@@ -12,7 +12,7 @@ if Sys.islinux()
     # In our system, both boards are connectd to the same pi0 port:
     shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
 else
-    show_output = () -> @info("Printed bytes: " * String(take!(both_boards_sink.srl)))
+    show_output = () -> @info("Printed bytes: " * String(take!(both_boards_sink.serial_port)))
 end
 
 # Utils
@@ -39,7 +39,7 @@ end
 # Set up boards
 dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
 digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
-both_boards_sink = all_alphazeta(shared_srl)
+both_boards_sink = all_alphazeta_sink(shared_srl)
 
 @info "Testing reset behavior"
 flash_reset(both_boards_sink)
@@ -59,15 +59,15 @@ sleep(1)
       """
 msg_dots = text_to_dots_bytes("YAY DOTS")
 msg_digits = text_to_digits_bytes("YAY DIGITS")
-@log_board "Display dots on both" display_bytes(both_boards_sink, msg_dots)
+@log_board "Display dots on both" display(both_boards_sink, msg_dots)
 clear(both_boards_sink)
-@log_board "Display digits on both" display_bytes(both_boards_sink, msg_digits)
+@log_board "Display digits on both" display(both_boards_sink, msg_digits)
 clear(both_boards_sink)
 
 @info "Testing single message to single board"
-@log_board "Display dots on dots" display_bytes(dots_sink, msg_dots)
+@log_board "Display dots on dots" display(dots_sink, msg_dots)
 clear(both_boards_sink)
-@log_board "Display digits on digits" display_bytes(digits_sink, msg_digits)
+@log_board "Display digits on digits" display(digits_sink, msg_digits)
 clear(both_boards_sink)
 
 @info "Testing message scrolling"

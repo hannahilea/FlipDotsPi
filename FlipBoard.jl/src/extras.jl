@@ -6,15 +6,15 @@
 function scroll_bytes(sink, msg::AbstractVector{UInt8}; loopcount=2, scrollpause=0.1) #TODO defaults
     for i in 1:loopcount, t in 1:length(msg)
         wrap_msg = i != loopcount
-        slice = zeros(UInt8, sink.num_msg_bytes)
-        for (i_slice, i_msg) in enumerate(t:(t + sink.num_msg_bytes - 1))
+        slice = zeros(UInt8, num_msg_bytes(sink))
+        for (i_slice, i_msg) in enumerate(t:(t + num_msg_bytes(sink) - 1))
             if i_msg <= length(msg)
                 slice[i_slice] = msg[i_msg]
             elseif wrap_msg
                 slice[i_slice] = msg[i_msg % length(msg) + 1]
             end
         end
-        display_bytes(sink, slice)
+        display(sink, slice)
         sleep(scrollpause)
     end
     return nothing
@@ -52,9 +52,9 @@ function _clapping_music(sink_dots, sink_digits; pause=0.1875,
     for _ in 1:num_shifts
         for _ in 1:num_repeats, _ in 1:12 # length of pattern
             clap_pattern[mod1(i1, 12)] &&
-                display_bytes(sink_dots, rand(0x00:0x7F, bytes_update_dots))
+                display(sink_dots, rand(0x00:0x7F, bytes_update_dots))
             clap_pattern[mod1(i2, 12)] &&
-                display_bytes(sink_digits, rand(0x00:0x7F, bytes_update_digits))
+                display(sink_digits, rand(0x00:0x7F, bytes_update_digits))
             i1 += 1
             i2 += 1
             sleep(pause)
@@ -67,8 +67,8 @@ end
 # traditional pause (bpm = 160-180) is 0.1667-0.1875 sec
 function clapping_music(sink_dots, sink_digits; pause=0.1875)
     # intro
-    display_bytes(sink_dots, text_to_dots_bytes("Clapping"))
-    display_bytes(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    display(sink_dots, text_to_dots_bytes("Clapping"))
+    display(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
     sleep(3)
     clear(sink_dots)
     clear(sink_digits)
@@ -78,9 +78,9 @@ function clapping_music(sink_dots, sink_digits; pause=0.1875)
     _clapping_music(sink_dots, sink_digits; pause, num_repeats=4)
 
     # And roll credits
-    display_bytes(sink_digits, text_to_digits_bytes("       Steve  Reich  1972"))
+    display(sink_digits, text_to_digits_bytes("       Steve  Reich  1972"))
     scroll_bytes(sink_dots, text_to_dots_bytes("Clapping Music"); loopcount=1)
-    display_bytes(sink_dots, text_to_dots_bytes("Clapping"))
-    display_bytes(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    display(sink_dots, text_to_dots_bytes("Clapping"))
+    display(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
     return nothing
 end

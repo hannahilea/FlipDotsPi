@@ -79,7 +79,7 @@ function main()
            AZDotsSink(; address=args.address, srl)
     msg = text_to_bytes(sink, args.message)
 
-    args.loopcount < 1 ? display_bytes(sink, msg) :
+    args.loopcount < 1 ? display(sink, msg) :
     scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
     return nothing
 end
