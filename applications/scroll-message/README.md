@@ -2,6 +2,6 @@
 
 Do
 ```
-julia --project=applications/scroll-message applications/scroll-message/run.jl
+julia --project=applications/scroll-message applications/scroll-message/run.jl --help
 ```
-Update the in-script `DEFAULT_LOCATION` constant to your specific latitude/longitude.
+so see options
