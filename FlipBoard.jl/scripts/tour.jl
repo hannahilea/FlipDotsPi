@@ -6,11 +6,8 @@ using FlipBoard
 shared_srl = open_srl_iff_available(; portname="/dev/ttyS0", baudrate=57600)
 
 # If we aren't connected to the serial port (ie aren't connected to a board), 
-# use an iobuffer to demonstrate functionality anyway
-if ismissing(shared_srl)
-    shared_srl = IOBuffer()
-    show_output = () -> @info("Printed bytes: " * String(take!(shared_srl)))
-end
+# nothing is going to happen. Sorry! :D (One could write a visualization tool, 
+# if one was annoyed by this....)
 
 # Set up boards
 dots_sink = AZDotsSink(; address=0x00, serial_port=shared_srl)
