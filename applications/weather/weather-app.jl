@@ -153,7 +153,6 @@ function update_every_half_hour(dots_sink, digits_sink; location)
             last_set = now()
             update_with_current_weather(dots_sink; scroll_long_msg=false, location)
             update_with_current_date(digits_sink)
-            @info "okay"
         end
         sleep(0.2) # half second polling
     end
