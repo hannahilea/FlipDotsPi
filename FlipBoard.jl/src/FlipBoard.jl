@@ -1,6 +1,6 @@
 module FlipBoard
 
-export open_srl, open_srl_iff_available, all_alphazeta_sink, scroll_bytes, flash_reset,
+export open_srl, open_srl_iff_available, all_alphazeta_sink, scroll_bytes, scroll_message, flash_reset,
        all_bright, all_dark, clear, write_to_sink, clapping_music, AZDotsSink, AZDigitsSink, 
        AZSinks, text_to_bytes, all_alphazeta_sink
 
