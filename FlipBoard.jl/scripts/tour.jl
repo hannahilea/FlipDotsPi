@@ -3,16 +3,14 @@
 
 using FlipBoard
 
-# Board-specific setup
-# Hacky check to see if we're on the pi, to prevent trying to connect to port that
-# isn't set up from laptop. For other systems, update `shared_srl` to point to
-# the relevant serial port!
-shared_srl = IOBuffer()
-if Sys.islinux()
-    # In our system, both boards are connectd to the same pi0 port:
-    shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
-else
-    show_output = () -> @info("Printed bytes: " * String(take!(both_boards_sink.serial_port)))
+# In our system, both boards are connectd to the same pi0 port:
+shared_srl = open_srl_iff_available(; portname="/dev/ttyS0", baudrate=57600)
+
+# If we aren't connected to the serial port (ie aren't connected to a board), 
+# use an iobuffer to demonstrate functionality anyway
+if ismissing(shared_srl)
+    shared_srl = IOBuffer()
+    show_output = () -> @info("Printed bytes: " * String(take!(shared_srl)))
 end
 
 # Utils
@@ -37,8 +35,8 @@ macro log_board(label::AbstractString, wait_sec::Int, expr)
 end
 
 # Set up boards
-dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
-digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
+dots_sink = AZDotsSink(; address=0x00, serial_port=shared_srl)
+digits_sink = AZDigitsSink(; address=0x01, serial_port=shared_srl)
 both_boards_sink = all_alphazeta_sink(shared_srl)
 
 @info "Testing reset behavior"

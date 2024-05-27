@@ -2,7 +2,7 @@ module FlipBoard
 
 export open_srl, open_srl_iff_available, all_alphazeta_sink, scroll_bytes, flash_reset,
        all_bright, all_dark, clear, write_to_sink, clapping_music, AZDotsSink, AZDigitsSink, 
-       AZSinks, text_to_bytes
+       AZSinks, text_to_bytes, all_alphazeta_sink
 
 using LibSerialPort
 
@@ -37,6 +37,8 @@ Base.@kwdef struct AlphaZetaSerialPortConfig
     command::UInt8 = 0x83
     num_msg_bytes::Int = 28
 end
+
+num_msg_bytes(config::AlphaZetaSerialPortConfig) = config.num_msg_bytes
 
 struct AZDotsSink
     serial_port_config::AlphaZetaSerialPortConfig
@@ -96,7 +98,7 @@ end
 
 Sink for all AlphaZeta boards connected via `serial_port`.
 """
-all_alphazeta_sink(serial_port) = AlphaZetaSerialPort(; address=0xFF, serial_port)
+all_alphazeta_sink(serial_port) = AlphaZetaSerialPortConfig(; address=0xFF, serial_port)
 
 """
     open_srl(; portname, baudrate)
