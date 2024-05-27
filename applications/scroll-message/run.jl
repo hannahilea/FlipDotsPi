@@ -8,19 +8,19 @@ Pkg.instantiate()
 using ArgParse
 using FlipBoard
 
-# Set up flipboard serial communication
-# For this app, we're communicating with two boards: one flipdots (for weather) 
-# and one flipdigits (for date). If only one is present, the script will still run 
-@info "Setting up serial port for flip boards..."
-shared_srl = missing
-try
-    shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
-catch
-    @warn "No serial port found; ensure board is connected and/or portnmae is correct"
-end
+# # Set up flipboard serial communication
+# # For this app, we're communicating with two boards: one flipdots (for weather) 
+# # and one flipdigits (for date). If only one is present, the script will still run 
+# @info "Setting up serial port for flip boards..."
+# shared_srl = missing
+# try
+#     shared_srl = open_srl(; portname="/dev/ttyS0", baudrate=57600)
+# catch
+#     @warn "No serial port found; ensure board is connected and/or portnmae is correct"
+# end
 
-dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
-digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
+# dots_sink = AlphaZetaSrl(; address=0x00, srl=shared_srl)
+# digits_sink = AlphaZetaSrl(; address=0x01, srl=shared_srl)
 
 ######
 
@@ -68,18 +68,13 @@ function main()
     args.verbose && println("Parsed args: $args")
 
     @info "Setting up serial port for flip boards..."
-    srl = missing
-    try
-        srl = open_srl(; portname=args.portname, baudrate=args.baudrate)
-    catch
-        @warn "No serial port found; ensure board is connected and/or portname is correct"
-    end
+    srl = open_srl_iff_available(; portname=args.portname, baudrate=args.baudrate)
 
-    sink = args.displaytype == "digits" ? AZDigitsSink(; address=args.address, srl) :
-           AZDotsSink(; address=args.address, srl)
+    sink = args.displaytype == "digits" ? AZDigitsSink(; address=args.address, serial_port=srl) :
+           AZDotsSink(; address=args.address, serial_port=srl)
     msg = text_to_bytes(sink, args.message)
 
-    args.loopcount < 1 ? display(sink, msg) :
+    args.loopcount < 1 ? write_to_sink(sink, msg) :
     scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
     return nothing
 end
