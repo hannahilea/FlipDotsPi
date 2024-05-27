@@ -6,15 +6,17 @@ function scroll_message(sink, message; kwargs...)
     return scroll_bytes(sink, text_to_bytes(sink, message); kwargs...)
 end
 
-function scroll_bytes(sink, message::AbstractVector{UInt8}; loopcount=2, scrollpause=0.1) #TODO defaults
-    # Allocate full message up front. Could be a bit ridiculous if the loopcount is high, but....so it goes. 
+function scroll_bytes(sink, message::AbstractVector{UInt8}; loopcount=2, scrollpause=0.1)
+    # Allocate full message up front. Could be a bit ridiculous if the loopcount 
+    # is high, but....so it goes. 
     looped_message = repeat(message, loopcount)
     for i in 1:length(looped_message)
-        i_end = minimum([i+num_msg_bytes(sink), length(looped_message)])
+        i_end = minimum([i + num_msg_bytes(sink), length(looped_message)])
         slice = @view looped_message[i:i_end]
         write_to_sink(sink, slice)
         sleep(scrollpause)
     end
+    clear(sink)
     return nothing
 end
 
