@@ -1,13 +1,12 @@
 ## Run FlipBoard.jl from the command line to scroll a single message
-
-# Safety first
+@info "Setting up environment..."
 using Pkg
-if Pkg.project().name != "FlipBoard"
-    @warn "Not running from w/in FlipBoard.jl environment; activate environment before running."
-end
+Pkg.resolve()
+Pkg.instantiate()
 
-using FlipBoard
+@info "Loading dependencies..."
 using ArgParse
+using FlipBoard
 
 function parse_commandline()
     s = ArgParseSettings(;
@@ -47,18 +46,22 @@ function parse_commandline()
     return parse_args(s)
 end
 
-# ...when running as script (not from REPL):
-if !isinteractive()
+function main()
     d = parse_commandline()
     args = NamedTuple{Tuple(Symbol.(keys(d)))}(values(d))
     args.verbose && println("Parsed args: $args")
 
-    # Set up
-    srl = open_srl(; portname=args.portname, baudrate=args.baudrate)
-    sink = AlphaZetaSrl(; address=args.address, srl)
+    @info "Setting up serial port for flip boards..."
+    srl = open_srl_iff_available(; portname=args.portname, baudrate=args.baudrate)
 
-    msg = args.displaytype == "digits" ? text_to_digits_bytes(args.message) :
-          text_to_dots_bytes(args.message)
-    args.loopcount < 1 ? display_bytes(sink, msg) :
-        scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
+    sink = args.displaytype == "digits" ? AZDigitsSink(; address=args.address, serial_port=srl) :
+           AZDotsSink(; address=args.address, serial_port=srl)
+    msg = text_to_bytes(sink, args.message)
+
+    args.loopcount < 1 ? write_to_sink(sink, msg) :
+    scroll_bytes(sink, msg; scrollpause=args.scrollpause, loopcount=args.loopcount)
+    return nothing
 end
+
+# ...when running as script (not from REPL):
+isinteractive() || main()
