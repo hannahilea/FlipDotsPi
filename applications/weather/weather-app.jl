@@ -118,8 +118,8 @@ function update_with_current_weather(sink; scroll_long_msg=true, location)
         @info "Displaying scrolling output..."
         scroll_bytes(sink, bytes_scroll; loopcount=1)
     end
-    @info "Displaying static output..."
-    display(sink, bytes_static)
+    @info "Displaying static output..." bytes_static typeof(bytes_static)
+    write_to_sink(sink, bytes_static)
     return nothing
 end
 
@@ -136,7 +136,7 @@ function update_with_current_date(sink)
 
     date_str = join(_rpad.([day(t), m, d]))
     bytes = text_to_bytes(sink, date_str)
-    display(sink, bytes)
+    write_to_sink(sink, bytes)
     return nothing
 end
 

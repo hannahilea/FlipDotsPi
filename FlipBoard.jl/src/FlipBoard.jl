@@ -1,7 +1,7 @@
 module FlipBoard
 
 export open_srl, open_srl_iff_available, all_alphazeta_sink, scroll_bytes, flash_reset,
-       all_bright,  all_dark, clear, display, clapping_music, AZDotsSink, AZDigitsSink, 
+       all_bright, all_dark, clear, write_to_sink, clapping_music, AZDotsSink, AZDigitsSink, 
        AZSinks, text_to_bytes
 
 using LibSerialPort
@@ -59,16 +59,16 @@ const AZSinks = Union{AZDotsSink,AZDigitsSink}
 num_msg_bytes(sink::AZSinks) = sink.serial_port_config.num_msg_bytes
 
 """
-    display(sink::AZSinks, byte_msg::AbstractVector{UInt8})
-    display(sink::AlphaZetaSerialPortConfig, byte_msg::AbstractVector{UInt8})
+    write_to_sink(sink::AZSinks, byte_msg::AbstractVector{UInt8})
+    write_to_sink(sink::AlphaZetaSerialPortConfig, byte_msg::AbstractVector{UInt8})
 
 Write `byte_msg` to `sink`.
 """
-function display(sink::AZSinks, byte_msg::AbstractVector{UInt8})
-    return display(sink.serial_port_config, byte_msg)
+function write_to_sink(sink::AZSinks, byte_msg::AbstractVector{UInt8})
+    return write_to_sink(sink.serial_port_config, byte_msg)
 end
 
-function display(sink::AlphaZetaSerialPortConfig, byte_msg::AbstractVector{UInt8})
+function write_to_sink(sink::AlphaZetaSerialPortConfig, byte_msg::AbstractVector{UInt8})
     num_bytes_displayable = sink.num_msg_bytes
     bytes = view(byte_msg, 1:min(num_bytes_displayable, length(byte_msg)))
     extra_bytes = zeros(UInt8, num_bytes_displayable - length(bytes))
@@ -81,14 +81,14 @@ write_serial_transmission(serial_port, transmission) = write(serial_port, transm
 write_serial_transmission(::Missing, transmission) = nothing
 
 """
-    display(sink, message::AbstractString)
+    write_to_sink(sink, message::AbstractString)
 
 Write `message` to `sink` after converting to message to bytes via [`
 `](@ref).
 """
-function display(sink, message::AbstractString)
+function write_to_sink(sink, message::AbstractString)
     message_bytes = text_to_bytes(sink, message)
-    return display(sink, message_bytes)
+    return write_to_sink(sink, message_bytes)
 end
 
 """
@@ -129,14 +129,14 @@ end
 
 Set all `sink` to white (or other color) side up.
 """
-all_bright(sink) = display(sink, fill(0xFF, num_msg_bytes(sink)))
+all_bright(sink) = write_to_sink(sink, fill(0xFF, num_msg_bytes(sink)))
 
 """
     all_dark(sink)
 
 Set all `sink` to black side up.
 """
-all_dark(sink) = display(sink, zeros(UInt8, num_msg_bytes(sink)))
+all_dark(sink) = write_to_sink(sink, zeros(UInt8, num_msg_bytes(sink)))
 
 """
     clear(sink)
