@@ -1,4 +1,4 @@
-# Flip Board Pi
+# FlipBoardPi
 
 Code to support running various applications---including a realtime weather monitor---on a flip board such as [AlphaZeta's flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays. Includes:
 

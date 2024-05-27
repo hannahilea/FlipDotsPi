@@ -118,7 +118,7 @@ function update_with_current_weather(sink; scroll_long_msg=true, location)
         @info "Displaying scrolling output..."
         scroll_bytes(sink, bytes_scroll; loopcount=1)
     end
-    @info "Displaying static output..." bytes_static typeof(bytes_static)
+    @info "Displaying static output..."
     write_to_sink(sink, bytes_static)
     return nothing
 end
