@@ -45,21 +45,18 @@ end
 
 function _clapping_music(sink_dots, sink_digits; pause=0.1875,
                          clap_pattern=Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
-                         num_repeats=12, num_shifts=13, bytes_update_dots=28,
-                         bytes_update_digits=7)
-    i1 = 1
-    i2 = 1
+                         num_repeats=12, num_shifts=13, num_dots_to_set=28,
+                         num_digit_segments_to_set=7)
+    i_pattern_shift = 0
     for _ in 1:num_shifts
-        for _ in 1:num_repeats, _ in 1:12 # length of pattern
-            clap_pattern[mod1(i1, 12)] &&
-                write_to_sink(sink_dots, rand(0x00:0x7F, bytes_update_dots))
-            clap_pattern[mod1(i2, 12)] &&
-                write_to_sink(sink_digits, rand(0x00:0x7F, bytes_update_digits))
-            i1 += 1
-            i2 += 1
+        for _ in 1:num_repeats, i_pattern in eachindex(clap_pattern)
+            clap_pattern[i_pattern] &&
+                write_to_sink(sink_dots, rand(0x00:0x7F, num_dots_to_set))
+            clap_pattern[mod1(i_pattern + i_pattern_shift, 12)] &&
+                write_to_sink(sink_digits, rand(0x00:0x7F, num_digit_segments_to_set))
             sleep(pause)
         end
-        i2 += 1
+        i_pattern_shift += 1
     end
 end
 
