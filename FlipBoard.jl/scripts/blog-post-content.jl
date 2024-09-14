@@ -17,7 +17,7 @@ FlipBoard._clapping_music(dots_sink, digits_sink; pause=0.15, num_repeats=2,
 sleep(1)
 flash_reset(both_boards_sink)
 
-# 2. Demo individual segments: dots
+# 2A. Demo individual segments: dots
 for c in ['.', ':', '!'], num_dots in 1:14
     write_to_sink(dots_sink, text_to_bytes(dots_sink, repeat(c, num_dots)))
     sleep(0.1)
@@ -32,7 +32,7 @@ all_bright(dots_sink)
 sleep(0.1)
 all_dark(dots_sink)
 
-# 2. Demo individual segments: dots
+# 2B. Demo individual segments: dots
 for c in ['-', '1', '8'], num_digits in 1:28
     write_to_sink(digits_sink, text_to_bytes(digits_sink, repeat(c, num_digits)))
     sleep(0.1)
