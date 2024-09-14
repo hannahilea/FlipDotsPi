@@ -30,8 +30,8 @@ const rhythm2 = ["1 1 1 1 1 1 1 1 1 1 1 1 1 1", "1   1 1 1   1 1 1 1   1 1 1",
                  "1   1 1 1             1 1 1", ""]
 
 # TODO helper for no srl
-function drumbeat_snippet(sink, phrases=rhythm1; pause=0.1)
-    for _ in 1:16
+function drumbeat_snippet(sink, phrases=rhythm1; pause=0.1, num_repeats=16)
+    for _ in 1:num_repeats
         for p in phrases
             write_to_sink(sink, text_to_bytes(sink, p))
             sleep(pause)
@@ -45,14 +45,15 @@ end
 
 function _clapping_music(sink_dots, sink_digits; pause=0.15,
                          clap_pattern=Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
-                         num_repeats=12, num_shifts=13, num_dots_to_set=28,
+                         num_repeats=12, num_shifts=length(clap_pattern) + 1,
+                         num_dots_to_set=28,
                          num_digits_to_set=2)
     i_pattern_shift = 0
     for _ in 1:num_shifts
         for _ in 1:num_repeats, i_pattern in eachindex(clap_pattern)
             clap_pattern[i_pattern] &&
                 write_to_sink(sink_dots, rand(0x00:0x7F, num_dots_to_set))
-            clap_pattern[mod1(i_pattern + i_pattern_shift, 12)] &&
+            clap_pattern[mod1(i_pattern + i_pattern_shift, length(clap_pattern))] &&
                 write_to_sink(sink_digits, rand(0x00:0x7F, num_digits_to_set))
             sleep(pause)
         end
