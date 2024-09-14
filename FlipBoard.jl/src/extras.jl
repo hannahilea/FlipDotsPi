@@ -64,8 +64,8 @@ end
 # traditional pause (bpm = 160-180) is 0.1667-0.1875 sec
 function clapping_music(sink_dots, sink_digits; kwargs...)
     # intro
-    write_to_sink(sink_dots, text_to_dots_bytes("Clapping"))
-    write_to_sink(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    write_to_sink(sink_dots, text_to_bytes(sink_dots, "Clapping"))
+    write_to_sink(sink_digits, text_to_bytes(sink_digits, "music  Steve  Reich  1972"))
     sleep(3)
     clear(sink_dots)
     clear(sink_digits)
@@ -75,9 +75,9 @@ function clapping_music(sink_dots, sink_digits; kwargs...)
     _clapping_music(sink_dots, sink_digits; kwargs...)
 
     # And roll credits
-    write_to_sink(sink_digits, text_to_digits_bytes("       Steve  Reich  1972"))
-    scroll_bytes(sink_dots, text_to_dots_bytes("Clapping Music"); loopcount=1)
-    write_to_sink(sink_dots, text_to_dots_bytes("Clapping"))
-    write_to_sink(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    write_to_sink(sink_digits, text_to_bytes(sink_digits, "       Steve  Reich  1972"))
+    scroll_bytes(sink_dots, text_to_bytes(sink_dots, "Clapping Music"); loopcount=1)
+    write_to_sink(sink_dots, text_to_bytes(sink_dots, "Clapping"))
+    write_to_sink(sink_digits, text_to_bytes(sink_digits, "music  Steve  Reich  1972"))
     return nothing
 end
