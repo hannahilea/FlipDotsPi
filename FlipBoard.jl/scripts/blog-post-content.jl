@@ -51,15 +51,15 @@ all_dark(digits_sink)
 # Pattern A
 all_dark(both_boards_sink)
 clap_pattern = Bool[1, 0, 0, 1, 1, 1]
-FlipBoard._clapping_music(dots_sink, digits_sink; clap_pattern, pause=0.15, num_repeats=4,
+FlipBoard._clapping_music(dots_sink, digits_sink; clap_pattern, pause=0.12, num_repeats=2,
                           num_dots_to_set=14, num_digits_to_set=4)
 sleep(1)
 all_dark(both_boards_sink)
 
 # Pattern B
 all_dark(both_boards_sink)
-clap_pattern = Bool[1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0]
-FlipBoard._clapping_music(dots_sink, digits_sink; clap_pattern, pause=0.15, num_repeats=4,
+clap_pattern = Bool[1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0]
+FlipBoard._clapping_music(dots_sink, digits_sink; clap_pattern, pause=0.15, num_repeats=2,
                           num_dots_to_set=28, num_digits_to_set=14)
 sleep(1)
 all_dark(both_boards_sink)
