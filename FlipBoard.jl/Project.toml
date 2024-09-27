@@ -1,7 +1,7 @@
 name = "FlipBoard"
 uuid = "96c49371-6108-43a2-a244-1c47317f47be"
 authors = ["hannahilea <hannahilea@users.noreply.github.com>", "aferguso2 <aferguso2@users.noreply.github.com>, and contributors"]
-version = "0.0.2"
+version = "0.0.3"
 
 [deps]
 LibSerialPort = "a05a14c7-6e3b-5ba9-90a2-45558833e1df"

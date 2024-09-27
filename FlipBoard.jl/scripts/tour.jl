@@ -35,7 +35,7 @@ scroll_message(dots_sink, "Yay dots")
 scroll_message(digits_sink, "Yay digits")
 
 @info "Testing `clapping_music`"
-FlipBoard._clapping_music(dots_sink, digits_sink; num_repeats=4, num_shifts=2)
+FlipBoard.perform_clapping_music(dots_sink, digits_sink; num_repeats=4, num_shifts=2)
 
 ## Drum examples
 const rhythm1 = ["1 1 1 1 ", "1 1    1 ", " 1     1 ", "      "]
