@@ -61,8 +61,8 @@ end
 # For dot boards, each `candidate_byte_indices` byte corresponds to a column, while 
 # for a digit board, it corresponds to a single 7-segment digit.
 function set_rand_discs(sink; num_discs=8,
-                        available_byte_indices::AbstractVector{UInt8}=)
-    return write_to_sink(sink, rand(0x00:0x7F, num_discs))
+                        byte_indices::AbstractVector{UInt8}=0x00:0x7F)
+    return write_to_sink(sink, rand(byte_indices, num_discs))
 end
 
 # https://en.wikipedia.org/wiki/Clapping_Music, idea by cpain
