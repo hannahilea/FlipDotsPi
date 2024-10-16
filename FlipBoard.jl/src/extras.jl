@@ -69,13 +69,9 @@ function perform_clapping_music(sink_dots, sink_digits; kwargs...)
     clear(sink_digits)
     sleep(2)
 
-    # For dot boards, each byte corresponds to a column, while 
-    # for a digit board, it corresponds to a single 7-segment digit
-    update_rand_bytes(sink, num_bytes) = write_to_sink(sink, rand(0x00:0x7F, num_bytes))
-
     # Play the thing!
-    clap_a = () -> update_rand_bytes(sink_dots, 28)
-    clap_b = () -> update_rand_bytes(sink_digits, 2)
+    clap_a = () -> write_to_sink(sink_dots, rand(0x00:0x7F, 28))
+    clap_b = () -> write_to_sink(sink_digits, rand(0x00:0x7F, 2))
     clapping_music(; clap_a, clap_b, kwargs...)
 
     # And roll credits
