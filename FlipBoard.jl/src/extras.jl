@@ -45,9 +45,9 @@ end
 
 function clapping_music(; clap_a=() -> print("A"), clap_b=() -> print("B"),
                         pause=0.15, clap_pattern=Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
-                        num_repeats=12, num_shifts=length(clap_pattern) + 1)
+                        num_repeats=12, num_shifts=length(clap_pattern))
     i_pattern_shift = 0
-    for _ in 1:num_shifts
+    for _ in 0:num_shifts
         for _ in 1:num_repeats, i_pattern in eachindex(clap_pattern)
             clap_pattern[i_pattern] && clap_a()
             clap_pattern[mod1(i_pattern + i_pattern_shift, length(clap_pattern))] &&
@@ -56,13 +56,6 @@ function clapping_music(; clap_a=() -> print("A"), clap_b=() -> print("B"),
         end
         i_pattern_shift += 1
     end
-end
-
-# For dot boards, each `candidate_byte_indices` byte corresponds to a column, while 
-# for a digit board, it corresponds to a single 7-segment digit.
-function set_rand_discs(sink; num_discs=8,
-                        byte_indices::AbstractVector{UInt8}=0x00:0x7F)
-    return write_to_sink(sink, rand(byte_indices, num_discs))
 end
 
 # https://en.wikipedia.org/wiki/Clapping_Music, idea by cpain
@@ -77,8 +70,8 @@ function perform_clapping_music(sink_dots, sink_digits; kwargs...)
     sleep(2)
 
     # Play the thing!
-    clap_a = () -> set_rand_discs(sink_dots; num_discs=28)
-    clap_b = () -> set_rand_discs(sink_digits; num_discs=2)
+    clap_a = () -> write_to_sink(sink_dots, rand(0x00:0x7F, 28))
+    clap_b = () -> write_to_sink(sink_digits, rand(0x00:0x7F, 2))
     clapping_music(; clap_a, clap_b, kwargs...)
 
     # And roll credits
