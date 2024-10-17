@@ -1,22 +1,22 @@
-##########
-########## Fun stuff
-##########
+#####
+##### Fun stuff
+#####
 
-#todo: rewrite for ring buffer
-function scroll_bytes(sink, msg::AbstractVector{UInt8}; loopcount=2, scrollpause=0.1) #TODO defaults
-    for i in 1:loopcount, t in 1:length(msg)
-        wrap_msg = i != loopcount
-        slice = zeros(UInt8, sink.num_msg_bytes)
-        for (i_slice, i_msg) in enumerate(t:(t + sink.num_msg_bytes - 1))
-            if i_msg <= length(msg)
-                slice[i_slice] = msg[i_msg]
-            elseif wrap_msg
-                slice[i_slice] = msg[i_msg % length(msg) + 1]
-            end
-        end
-        display_bytes(sink, slice)
+function scroll_message(sink, message; kwargs...)
+    return scroll_bytes(sink, text_to_bytes(sink, message); kwargs...)
+end
+
+function scroll_bytes(sink, message::AbstractVector{UInt8}; loopcount=2, scrollpause=0.1)
+    # Allocate full message up front. Could be a bit ridiculous if the loopcount 
+    # is high, but....so it goes. 
+    looped_message = repeat(message, loopcount)
+    for i in 1:length(looped_message)
+        i_end = minimum([i + num_msg_bytes(sink), length(looped_message)])
+        slice = @view looped_message[i:i_end]
+        write_to_sink(sink, slice)
         sleep(scrollpause)
     end
+    clear(sink)
     return nothing
 end
 
@@ -30,57 +30,54 @@ const rhythm2 = ["1 1 1 1 1 1 1 1 1 1 1 1 1 1", "1   1 1 1   1 1 1 1   1 1 1",
                  "1   1 1 1             1 1 1", ""]
 
 # TODO helper for no srl
-function drumbeat_snippet2(srl, board, phrases=rhythm1; pause=0.1)
-    for i in 1:16
+function drumbeat_snippet(sink, phrases=rhythm1; pause=0.1, num_repeats=16)
+    for _ in 1:num_repeats
         for p in phrases
-            send_transmission(srl, text_to_bytes(board, p))
+            write_to_sink(sink, text_to_bytes(sink, p))
             sleep(pause)
         end
     end
 end
 
 #####
-##### Sequency rhythms
+##### Clapping music
 #####
 
-function _clapping_music(sink_dots, sink_digits; pause=0.1875,
-                         clap_pattern=Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
-                         num_repeats=12, num_shifts=13, bytes_update_dots=28,
-                         bytes_update_digits=7)
-    i1 = 1
-    i2 = 1
-    for _ in 1:num_shifts
-        for _ in 1:num_repeats, _ in 1:12 # length of pattern
-            clap_pattern[mod1(i1, 12)] &&
-                display_bytes(sink_dots, rand(0x00:0x7F, bytes_update_dots))
-            clap_pattern[mod1(i2, 12)] &&
-                display_bytes(sink_digits, rand(0x00:0x7F, bytes_update_digits))
-            i1 += 1
-            i2 += 1
+function clapping_music(; clap_a=() -> print("A"), clap_b=() -> print("B"),
+                        pause=0.15, clap_pattern=Bool[1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0],
+                        num_repeats=12, num_shifts=length(clap_pattern))
+    i_pattern_shift = 0
+    for _ in 0:num_shifts
+        for _ in 1:num_repeats, i_pattern in eachindex(clap_pattern)
+            clap_pattern[i_pattern] && clap_a()
+            clap_pattern[mod1(i_pattern + i_pattern_shift, length(clap_pattern))] &&
+                clap_b()
             sleep(pause)
         end
-        i2 += 1
+        i_pattern_shift += 1
     end
 end
 
 # https://en.wikipedia.org/wiki/Clapping_Music, idea by cpain
 # traditional pause (bpm = 160-180) is 0.1667-0.1875 sec
-function clapping_music(sink_dots, sink_digits; pause=0.1875)
+function perform_clapping_music(sink_dots, sink_digits; kwargs...)
     # intro
-    display_bytes(sink_dots, text_to_dots_bytes("Clapping"))
-    display_bytes(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    write_to_sink(sink_dots, text_to_bytes(sink_dots, "Clapping"))
+    write_to_sink(sink_digits, text_to_bytes(sink_digits, "music  Steve  Reich  1972"))
     sleep(3)
     clear(sink_dots)
     clear(sink_digits)
     sleep(2)
 
     # Play the thing!
-    _clapping_music(sink_dots, sink_digits; pause, num_repeats=4)
+    clap_a = () -> write_to_sink(sink_dots, rand(0x00:0x7F, 28))
+    clap_b = () -> write_to_sink(sink_digits, rand(0x00:0x7F, 2))
+    clapping_music(; clap_a, clap_b, kwargs...)
 
     # And roll credits
-    display_bytes(sink_digits, text_to_digits_bytes("       Steve  Reich  1972"))
-    scroll_bytes(sink_dots, text_to_dots_bytes("Clapping Music"); loopcount=1)
-    display_bytes(sink_dots, text_to_dots_bytes("Clapping"))
-    display_bytes(sink_digits, text_to_digits_bytes("music  Steve  Reich  1972"))
+    write_to_sink(sink_digits, text_to_bytes(sink_digits, "       Steve  Reich  1972"))
+    scroll_bytes(sink_dots, text_to_bytes(sink_dots, "Clapping Music"); loopcount=1)
+    write_to_sink(sink_dots, text_to_bytes(sink_dots, "Clapping"))
+    write_to_sink(sink_digits, text_to_bytes(sink_digits, "music  Steve  Reich  1972"))
     return nothing
 end

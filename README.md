@@ -1,14 +1,14 @@
-# Flip Board Pi
+# FlipBoardPi
 
-Code to support running various applications---including a realtime weather monitor---on a flip board such as [AlphaZeta's flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays!
+Project write-up here: [*Clapping Music* for two flip-disc displays](https://hannahilea.com/blog/clapping-music-for-flip-disc-displays/)
 
-Includes:
+Code to support running various applications---including a realtime weather monitor---on a flip board such as [AlphaZeta's flip dot](https://flipdots.com/en/products-services/flip-dot-boards-xy5/) displays. Includes:
 
-- **Basic text display**, for both scrolling and static messages! See [the examples in the FlipBoard.jl quickstart guide](FlipBoard.jl/README.md).
+- **Basic text display**, for both scrolling and static messages! See examples in the [FlipBoard.jl quickstart guide](FlipBoard.jl/README.md) and in the [weather display](./applications/scroll-message/README.md).
 
 - **Realtime [weather display](./applications/weather/README.md)**!
 
-- **Play Steve Reich's "Clapping Music"**! See the [FlipBoard.jl tour](FlipBoard.jl/scripts/tour.jl) for instructions.
+- **Play Steve Reich's [*Clapping Music*](https://hannahilea.com/blog/clapping-music-for-flip-disc-displays/)**! See the [FlipBoard.jl tour](FlipBoard.jl/scripts/tour.jl).
 
 This repository contains the following, each of which is relatively orthogonal and use-case specific:
 - [Set-up instructions for the AlphaZeta-provided Raspberry Pi Zero](#raspberry-pi-zero-configuration), to enable running custom applications on an AlphaZeta board
@@ -160,7 +160,6 @@ To send messages to the display from Julia, we'll use [LibSerialPort.jl](https:/
     srl = LibSerialPort.open("/dev/ttyS0", 57600; mode=SP_MODE_WRITE)
     ```
     ...this doesn't do anything yet, but unless your system is configured correctly (**and the Pi is connected to the Flip Board!!**) it will likely error.
-
 
 ### Additional Pi configuration
 
