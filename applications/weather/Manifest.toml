@@ -17,7 +17,7 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 deps = ["LibSerialPort"]
 path = "../../FlipBoard.jl"
 uuid = "96c49371-6108-43a2-a244-1c47317f47be"
-version = "0.0.2"
+version = "0.0.3"
 
 [[InteractiveUtils]]
 deps = ["Markdown"]
