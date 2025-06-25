@@ -86,18 +86,19 @@ function format_weather(sink, forecast, hourly_forecast)
     short_str = vcat(text_to_bytes(sink, string("   ", temp, "°")), weather_icon)
     
     @info "Formatting scrolling output..."
-    short_forecast = let 
-        # Hourly forecast is split into periods, where the current hour is first
-        str = read(pipeline(`echo $forecast`, `jq '.properties.periods[0].shortForecast'`), String)
-        replace(chomp(str), "\"" => "")
-    end
-    next_forecast = let 
-        name = read(pipeline(`echo $forecast`, `jq '.properties.periods[1].name'`), String)
-        content = read(pipeline(`echo $forecast`, `jq '.properties.periods[1].shortForecast'`), String)
-        replace(chomp(name) * ": " * chomp(content), "\"" => "")
-    end
+    # short_forecast = let 
+    #     # Hourly forecast is split into periods, where the current hour is first
+    #     str = read(pipeline(`echo $forecast`, `jq '.properties.periods[0].shortForecast'`), String)
+    #     replace(chomp(str), "\"" => "")
+    # end
+    # next_forecast = let 
+    #     name = read(pipeline(`echo $forecast`, `jq '.properties.periods[1].name'`), String)
+    #     content = read(pipeline(`echo $forecast`, `jq '.properties.periods[1].shortForecast'`), String)
+    #     replace(chomp(name) * ": " * chomp(content), "\"" => "")
+    # end
 
-    long_str = string("Now: ", temp, "° ", short_forecast * "! ", next_forecast * "!")
+    long_str = string("Now: ", temp, "° !")
+    #  long_str = string("Now: ", temp, "° ", short_forecast * "! ", next_forecast * "!")
     @info "\t-> $(long_str)"
     return short_str, text_to_bytes(sink, long_str)
 end
