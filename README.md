@@ -184,6 +184,38 @@ If you want to use do any additional development on your board, including clonin
     ```
     When prompted for a username, give your github username; when prompted for a password, use the PAT you generated in step 1.
 
+3. (Optional) Set up [Tailscale](https://tailscale.com/) 
+    1. [Sign up](https://login.tailscale.com/admin/welcome) for a tailscale account, if you don't already have one.
+
+    2. Install tailscale on the pi:
+    ```
+    sudo apt-get install apt-transport-https
+
+    curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg > /dev/null
+    curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+
+    sudo apt-get update
+    sudo apt-get install tailscale
+    ```
+
+    3. Connect your pi to your tailscale device! On the pi, do 
+    ```
+    sudo tailscale up
+    ```
+    which will provide a URL + prompt for how to connect. Once you do that, your new device should show up on the [tailscale console](https://login.tailscale.com/admin/machines)! If you won't have easy access to the device in the future, consider doing `... > Disable key expiry` on that pi from the console. 
+
+    4. If this is your first time using Tailscale: Also install tailscale on whatever device you want to access the pi from (e.g., your personal computer). (The same browser page that popped up to support the previous step will walk you through this.)
+
+    5. Now, from the computer you installed tailscale on in step 4, you can ssh onto your pi through tailscale: 
+    ```
+    ssh pi@flipdots # note the lack of `.local`
+    ```
+    Huzzah! 
+
+    When ssh'd onto the pi, you can do `sudo tailscale down` to disconnect from the VPN, or `sudo tailscale up` to reconnect. (`tailscale status` tells you whether you are currently connected or not.)
+
+    If you are giving the pi to someone else, and only want it to be available via tailscale when that giftee chooses (and they are willing and able to interact with a terminal themselves!), you can `sudo tailscale down` for now, and then give them instructions to enable it as needed.
+
 ### FAQ
 
 _Q. Even though I disabled Maestro from automatically running, I'd like to manually start it. How do I do that?_
