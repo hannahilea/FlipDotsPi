@@ -10,35 +10,6 @@ using Dates
 ##### Weather
 #####
 
-# hacky JSON parser substitute
-function _get_string_value(body, key; index=2)
-    spl_body = split(body, "\"$key\": \"")
-    if length(spl_body) < index
-        @warn "no can do str" key length(spl_body) index now()
-        return ""
-    end
-    return first(split(spl_body[index], "\","))
-end
-
-function _get_int_value(body, key; index=2)
-    spl_body = split(body, "\"$key\": ")
-    if length(spl_body) < index
-        @warn "no can do int" key length(spl_body) index
-        return "-"
-    end
-    return first(split(spl_body[index], ","))
-end
-
-function _get_bool_value(body, key; index=2)
-    spl_body = split(body, "\"$key\": ")
-    if length(spl_body) < index
-        @warn "no can do int" key length(spl_body) index
-        return true
-    end
-    return lowercase(first(split(spl_body[index], ","))) == "true"
-end
-
-# Set up weather
 function get_weather(; location)
     try
         url = "https://api.weather.gov/points/$location"
@@ -64,30 +35,40 @@ function get_weather(; location)
     end
 end
 
-function _get_weather_icon_from_hourly(hourly_forecast)
-    # Check for rest of day through midnight
-    # (_after_ midnight, is for next day)
+function _get_weather_icon_from_hourly(hourly_forecast; midnight_str="T21:00:00-04:00")
     @info "Determining weather icon..."
-    i = findfirst(1:24) do ind
-        return contains(_get_string_value(hourly_forecast, "startTime"; index=ind), "T00")
-    end
-    if isnothing(i)
-        i = 2
-        @info "Not sure why hourly forecast didn't have startTime..." now()
-        @info hourly_forecast
-    end
-    weather_str = lowercase(join(map(k -> _get_string_value(hourly_forecast,
-                                                            "shortForecast"; index=k), 2:i)))
+    # Daily weather is split into hours, starting with the current hour  
+    # We want to read all hours until midnight to figure out 
+    # if there's going to be precipitation before then 
 
-    contains(weather_str, "snow") && return DOTS_SNOW
-    contains(weather_str, "rain") && return DOTS_RAIN
-    contains(weather_str, "shower") && return DOTS_RAIN
-
-    if _get_bool_value(hourly_forecast, "isDaytime")
-        return contains(lowercase(_get_string_value(hourly_forecast, "shortForecast")),
-                        "sun") ? DOTS_SUN : DOTS_CLOUD
+    # When is last period before midnight??
+    i_midnight = let 
+        strs = readlines(pipeline(`echo $hourly_forecast`,
+            `jq ".properties.periods[].endTime"`))
+        i = findfirst(contains(midnight_str), strs) # NOTE: THIS IS BECAUSE OF MY TIME ZONE
+        # We need the *json* index, which is 0-indexed 
+        i - 1
     end
-    return DOTS_NIGHT
+    short_forecasts_str = lowercase(read(pipeline(`echo $hourly_forecast`,
+            `jq ".properties.periods[range(0; $i_midnight)].shortForecast"`), String))
+    
+    # Can we return early?
+    contains(short_forecasts_str, "snow") && return DOTS_SNOW
+    contains(short_forecasts_str, "rain") && return DOTS_RAIN
+    contains(short_forecasts_str, "shower") && return DOTS_RAIN
+
+    # Okay, we aren't obviously raining or snowing...
+    current_short_forecast = lowercase(read(pipeline(`echo $hourly_forecast`,
+            `jq ".properties.periods[0].shortForecast"`), String))
+    is_day = let 
+        str = read(pipeline(`echo $hourly_forecast`,
+            `jq ".properties.periods[0].isDaytime"`), String)
+        chomp(str) == "true"
+    end
+    if is_day
+        return contains(current_short_forecast, "sun") ? DOTS_SUN : DOTS_CLOUD
+    end
+    return contains(current_short_forecast, "mostly cloudy") ? DOTS_CLOUD : DOTS_NIGHT
 end
 
 # Return short form, long form
@@ -95,24 +76,36 @@ format_weather(sink, ::Missing, ::Missing) = (text_to_bytes(sink, "-"), text_to_
 
 function format_weather(sink, forecast, hourly_forecast)
     @info "Formatting output..."
+    temp = let
+        # Hourly forecast is split into periods, where the current hour is first
+        str = read(pipeline(`echo $hourly_forecast`, `jq '.properties.periods[0].temperature'`), String)
+        chomp(str)
+    end
+
     weather_icon = _get_weather_icon_from_hourly(hourly_forecast)
-    short_str = vcat(text_to_bytes(sink, string("   ",
-                                               _get_int_value(hourly_forecast,
-                                                              "temperature"), "°")),
-                     weather_icon)
+    short_str = vcat(text_to_bytes(sink, string("   ", temp, "°")), weather_icon)
+    
     @info "Formatting scrolling output..."
-    long_str = string("Now: ", _get_int_value(hourly_forecast, "temperature"), "° ",
-                      _get_string_value(forecast, "shortForecast"), "! ",
-                      _get_string_value(forecast, "name"; index=3), ": ",
-                      _get_string_value(forecast, "shortForecast"; index=3), "!")
+    short_forecast = let 
+        # Hourly forecast is split into periods, where the current hour is first
+        str = read(pipeline(`echo $forecast`, `jq '.properties.periods[0].shortForecast'`), String)
+        replace(chomp(str), "\"" => "")
+    end
+    next_forecast = let 
+        name = read(pipeline(`echo $forecast`, `jq '.properties.periods[1].name'`), String)
+        content = read(pipeline(`echo $forecast`, `jq '.properties.periods[1].shortForecast'`), String)
+        replace(chomp(name) * ": " * chomp(content), "\"" => "")
+    end
+
+    long_str = string("Now: ", temp, "° ", short_forecast * "! ", next_forecast * "!")
     @info "\t-> $(long_str)"
     return short_str, text_to_bytes(sink, long_str)
 end
 
 function update_with_current_weather(sink; scroll_long_msg=true, location)
     @info "Updating!" now()
+    
     # Get weather
-    #TODO-handle separately, handle 'missing' appropriately
     bytes_static, bytes_scroll = format_weather(sink, get_weather(; location)...)
 
     # Display it!
