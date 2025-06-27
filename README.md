@@ -1,4 +1,5 @@
 # FlipBoardPi
+[<img alt="Static Badge" src="https://img.shields.io/badge/%F0%9F%AA%B4%20Houseplant%20-x?style=flat&amp;label=Project%20type&amp;color=1E1E1D">](https://www.hannahilea.com/blog/houseplant-programming)
 
 Project write-up here: [*Clapping Music* for two flip-disc displays](https://hannahilea.com/blog/clapping-music-for-flip-disc-displays/)
 
