@@ -101,8 +101,8 @@ function format_weather(sink, forecast, hourly_forecast)
         content = read(pipeline(`cat $f`, `jq '.properties.periods[1].shortForecast'`), String)
         replace(chomp(name) * ": " * chomp(content), "\"" => "")
     end
-    rm(f)
-    rm(f_hourly)
+    # rm(f)
+    # rm(f_hourly)
 
     long_str = string("Now: ", temp, "° !")
     long_str = string("Now: ", temp, "° ", short_forecast * "! ", next_forecast * "!")
