@@ -35,7 +35,7 @@ function get_weather(; location)
     end
 end
 
-function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T21:00:00-04:00")
+function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T00:00:00")
     @info "Determining weather icon..."
     # Daily weather is split into hours, starting with the current hour  
     # We want to read all hours until midnight to figure out 
@@ -45,7 +45,7 @@ function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T21:0
     i_midnight = let 
         strs = readlines(pipeline(`cat $hourly_forecast_file`,
             `jq ".properties.periods[].endTime"`))
-        i = findfirst(contains(midnight_str), strs) # NOTE: THIS IS BECAUSE OF MY TIME ZONE
+        i = findfirst(contains(midnight_str), strs)
         # We need the *json* index, which is 0-indexed 
         i - 1
     end
