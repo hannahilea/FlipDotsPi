@@ -51,11 +51,12 @@ function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T21:0
     end
     short_forecasts_str = lowercase(read(pipeline(`cat $hourly_forecast_file`,
             `jq ".properties.periods[range(0; $i_midnight)].shortForecast"`), String))
+    @info short_forecasts_str
     
     # Can we return early?
-    contains(short_forecasts_str, "snow") && return DOTS_SNOW
-    contains(short_forecasts_str, "rain") && return DOTS_RAIN
-    contains(short_forecasts_str, "shower") && return DOTS_RAIN
+    contains(short_forecasts_str, "snow") && (@info "SNOW"; return DOTS_SNOW)
+    contains(short_forecasts_str, "rain") && (@info "RAIN"; return DOTS_RAIN)
+    contains(short_forecasts_str, "shower") && (@info "SHOWER"; return DOTS_RAIN)
 
     # Okay, we aren't obviously raining or snowing...
     current_short_forecast = lowercase(read(pipeline(`cat $hourly_forecast_file`,
@@ -66,9 +67,11 @@ function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T21:0
         chomp(str) == "true"
     end
     if is_day
-        return contains(current_short_forecast, "sun") ? DOTS_SUN : DOTS_CLOUD
+        @info "IS DAY!"
+        return contains(current_short_forecast, "sun") ? (@info "SUN"; DOTS_SUN) : (@info "CLOUD"; DOTS_CLOUD)
     end
-    return contains(current_short_forecast, "mostly cloudy") ? DOTS_CLOUD : DOTS_NIGHT
+    @info "IS NOT DAY!"
+    return contains(current_short_forecast, "mostly cloudy") ? (@info "CLOUD"; DOTS_CLOUD) : (@info "NIGHT"; DOTS_NIGHT)
 end
 
 # Return short form, long form
