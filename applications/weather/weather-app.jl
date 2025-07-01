@@ -35,14 +35,26 @@ function get_weather(; location)
     end
 end
 
-function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T00:00:00")
+function _get_weather_icon_from_hourly(hourly_forecast_file)
     @info "Determining weather icon..."
     # Daily weather is split into hours, starting with the current hour  
     # We want to read all hours until midnight to figure out 
     # if there's going to be precipitation before then 
 
+    # When is the current period?
+    i_now = let 
+        hour = last(split(string(now()), 'T'))[1:2]
+        now_str = "T$hour"
+        strs = readlines(pipeline(`cat $hourly_forecast_file`,
+            `jq ".properties.periods[].startTime"`))
+        i = findfirst(contains(now_str), strs)
+        # We need the *json* index, which is 0-indexed 
+        i - 1
+    end
+
     # When is last period before midnight??
     i_midnight = let 
+        midnight_str="T00:00:00"
         strs = readlines(pipeline(`cat $hourly_forecast_file`,
             `jq ".properties.periods[].endTime"`))
         i = findfirst(contains(midnight_str), strs)
@@ -50,7 +62,7 @@ function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T00:0
         i - 1
     end
     short_forecasts_str = lowercase(read(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[range(0; $i_midnight)].shortForecast"`), String))
+            `jq ".properties.periods[range($i_now; $i_midnight)].shortForecast"`), String))
     @info short_forecasts_str
     
     # Can we return early?
@@ -60,10 +72,10 @@ function _get_weather_icon_from_hourly(hourly_forecast_file; midnight_str="T00:0
 
     # Okay, we aren't obviously raining or snowing...
     current_short_forecast = lowercase(read(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[0].shortForecast"`), String))
+            `jq ".properties.periods[$i_now].shortForecast"`), String))
     is_day = let 
         str = read(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[0].isDaytime"`), String)
+            `jq ".properties.periods[$i_now].isDaytime"`), String)
         chomp(str) == "true"
     end
     if is_day
@@ -77,37 +89,57 @@ end
 # Return short form, long form
 format_weather(sink, ::Missing, ::Missing) = (text_to_bytes(sink, "-"), text_to_bytes(sink, "Unable to fetch weather"))
 
+_hour_from_time(str) = last(split(string(str), 'T'))[1:2]
+
 function format_weather(sink, forecast, hourly_forecast)
     @info "Formatting output..."
-    f = "_most_recent_forecast.json"
-    f_hourly = "_most_recent_hourly_forecast.json"
-    write(f, forecast)
-    write(f_hourly, hourly_forecast)
+    hourly_forecast_file = "_most_recent_hourly_forecast.json"
+    write(hourly_forecast_file, hourly_forecast)
+    forecast_file = "_most_recent_forecast.json"
+    write(forecast_file, forecast)
 
-    temp = let
-        # Hourly forecast is split into periods, where the current hour is first
-        str = read(pipeline(`cat $f`, `jq '.properties.periods[0].temperature'`), String)
-        chomp(str)
+    @info "Formatting short output..."
+    weather_icon = _get_weather_icon_from_hourly(hourly_forecast_file)
+    now_hour = _hour_from_time(now())
+    i_now = let 
+        now_str = "T$now_hour"
+        strs = readlines(pipeline(`cat $hourly_forecast_file`,
+            `jq ".properties.periods[].startTime"`))
+        i = findfirst(contains(now_str), strs)
+        # We need the *json* index, which is 0-indexed 
+        i - 1
     end
-
-    weather_icon = _get_weather_icon_from_hourly(f_hourly)
+    str = read(pipeline(`cat $hourly_forecast_file`, `jq ".properties.periods[$i_now].temperature"`), String)
+    temp = chomp(str)
     short_str = vcat(text_to_bytes(sink, string("   ", temp, "°")), weather_icon)
     
     @info "Formatting scrolling output..."
     short_forecast = let 
-        # Hourly forecast is split into periods, where the current hour is first
-        str = read(pipeline(`cat $f`, `jq '.properties.periods[0].shortForecast'`), String)
+        # Basic forecast is split into periods, where the current hour is first
+        str = read(pipeline(`cat $hourly_forecast_file`, `jq ".properties.periods[$i_now].shortForecast"`), String)
         replace(chomp(str), "\"" => "")
     end
     next_forecast = let 
-        name = read(pipeline(`cat $f`, `jq '.properties.periods[1].name'`), String)
-        content = read(pipeline(`cat $f`, `jq '.properties.periods[1].shortForecast'`), String)
+        hour = parse(Int, now_hour)
+        strs = readlines(pipeline(`cat $forecast_file`, `jq ".properties.periods[].endTime"`))
+        hours = map(s -> parse(Int, _hour_from_time(s)), strs)
+        for i in 2:length(hours)
+            while hours[i] < hours[i - 1]
+                hours[i] += 24
+            end
+        end 
+        i_now = findfirst(>(hour), hours)
+        if abs(hours[i_now] - hour) < 1
+            # If we're near the end of the current time block, look ahead one block
+            i_now += 1
+        end
+        i_now -= 1 # b/c json
+
+        name = read(pipeline(`cat $forecast_file`, `jq ".properties.periods[$i_now].name"`), String)
+        content = read(pipeline(`cat $forecast_file`, `jq ".properties.periods[$i_now].shortForecast"`), String)
         replace(chomp(name) * ": " * chomp(content), "\"" => "")
     end
-    # rm(f)
-    # rm(f_hourly)
 
-    long_str = string("Now: ", temp, "° !")
     long_str = string("Now: ", temp, "° ", short_forecast * "! ", next_forecast * "!")
     @info "\t-> $(long_str)"
     return short_str, text_to_bytes(sink, long_str)
