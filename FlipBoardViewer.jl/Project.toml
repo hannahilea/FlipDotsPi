@@ -1,0 +1,16 @@
+name = "FlipBoardViewer"
+uuid = "48e0bb6b-7cbb-482a-bf44-b6cdf92164b4"
+authors = ["aferguso2 <aferguso2@users.noreply.github.com>, hannahilea <hannahilea@users.noreply.github.com>, and contributors"]
+version = "0.0.1"
+
+[deps]
+FlipBoard = "96c49371-6108-43a2-a244-1c47317f47be"
+
+[compat]
+julia = "1.5"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
