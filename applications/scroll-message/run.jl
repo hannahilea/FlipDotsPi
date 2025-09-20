@@ -52,7 +52,7 @@ end
 # Adapted from which was adapted from plotter-lab which was adapted from 
 # https://discourse.julialang.org/t/timed-wait-for-key-press
 function realtime_repl_display!(sink)
-    @info "Entering live-scroll mode. Any characters you type will immediately be displayed on the board."
+    @info "Entering live-scroll mode. Any characters you type will immediately be displayed on the board. Hit `esc` to leave."
     if isdefined(Main, :VSCodeServer)
         @warn "Likely cannot run `destination_repl` from an interactive VSCode session; user input broken"
     end
@@ -61,24 +61,27 @@ function realtime_repl_display!(sink)
     REPL.Terminals.raw!(term, true)
     Base.start_reading(stdin)
 
-    try 
-        while true
-            sleep(0.01) # TODO Tune
-            if bytesavailable(stdin) > 0
-                key_str = String(read(stdin, bytesavailable(stdin)))
-                msg = text_to_bytes(sink, key_str)
-                @info msg #TODO-remove
-                write_to_sink(sink, msg)  
-                # TODO: one character at a time! figure out how to scroll
+    msg_buffer = zeros(UInt8, sink.num_msg_bytes)
+    while true
+        sleep(0.01) # TODO Tune
+        if bytesavailable(stdin) > 0
+            b = read(stdin, bytesavailable(stdin))
+            if b == UInt8[0x1b] # escape key 
+                break 
             end
+            msg = text_to_bytes(sink, String(b))
+            deleteat!(msg_buffer, 1:length(msg))
+            append!(msg_buffer, msg)
+            @info "Okay" msg_buffer msg
+            write_to_sink(sink, msg_buffer)  
         end
-    finally
-        println("Exiting REPL; live-scroll mode over! Thanks for playing :)")
     end
+    println("Live-display mode over---thanks for playing! :)")
 end
 
-write_to_sink(::Missing, msg) = println("TYPED: $msg")
-FlipBoard.text_to_bytes(::Missing, msg::String) = msg
+# Support testing locally when setting sink to missing
+# write_to_sink(::Missing, msg) = println("TYPED: $msg")
+# FlipBoard.text_to_bytes(::Missing, msg::String) = msg
 
 function main()
     d = parse_commandline()
