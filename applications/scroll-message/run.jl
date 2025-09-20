@@ -61,7 +61,7 @@ function realtime_repl_display!(sink)
     REPL.Terminals.raw!(term, true)
     Base.start_reading(stdin)
 
-    msg_buffer = zeros(UInt8, sink.num_msg_bytes)
+    msg_buffer = zeros(UInt8, sink.serial_port_config.num_msg_bytes)
     while true
         sleep(0.01) # TODO Tune
         if bytesavailable(stdin) > 0
