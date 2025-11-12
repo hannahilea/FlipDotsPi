@@ -1,4 +1,4 @@
-module WeatherApp 
+module WeatherApp
 
 export update_with_current_weather, update_with_current_date, update_every_half_hour
 
@@ -18,10 +18,10 @@ function get_weather(; location)
         # Normally would use JSON to parse this...and HTTP.jl. but for pi, really don't want
         # all of those dependencies. So! Doing it a brittle way here :)
         # TODO: consider adding dep on the jq_dll?
-        forecast_url, hourly_url = let 
+        forecast_url, hourly_url = let
             str = readlines(pipeline(`curl $url`,
-            `jq '.properties.forecast, .properties.forecastHourly'`))
-            map(s -> replace(s, "\""=>""), str)
+                                     `jq '.properties.forecast, .properties.forecastHourly'`))
+            map(s -> replace(s, "\"" => ""), str)
         end
         @debug "Location urls: " forecast_url hourly_url
 
@@ -42,29 +42,30 @@ function _get_weather_icon_from_hourly(hourly_forecast_file)
     # if there's going to be precipitation before then 
 
     # When is the current period?
-    i_now = let 
+    i_now = let
         hour = last(split(string(now()), 'T'))[1:2]
         now_str = "T$hour"
         strs = readlines(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[].startTime"`))
+                                  `jq ".properties.periods[].startTime"`))
         i = findfirst(contains(now_str), strs)
         # We need the *json* index, which is 0-indexed 
         i - 1
     end
 
     # When is last period before midnight??
-    i_midnight = let 
-        midnight_str="T00:00:00"
+    i_midnight = let
+        midnight_str = "T00:00:00"
         strs = readlines(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[].endTime"`))
+                                  `jq ".properties.periods[].endTime"`))
         i = findfirst(contains(midnight_str), strs)
         # We need the *json* index, which is 0-indexed 
         i - 1
     end
     short_forecasts_str = lowercase(read(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[range($i_now; $i_midnight)].shortForecast"`), String))
+                                                  `jq ".properties.periods[range($i_now; $i_midnight)].shortForecast"`),
+                                         String))
     @info short_forecasts_str
-    
+
     # Can we return early?
     contains(short_forecasts_str, "snow") && (@info "SNOW"; return DOTS_SNOW)
     contains(short_forecasts_str, "rain") && (@info "RAIN"; return DOTS_RAIN)
@@ -72,22 +73,27 @@ function _get_weather_icon_from_hourly(hourly_forecast_file)
 
     # Okay, we aren't obviously raining or snowing...
     current_short_forecast = lowercase(read(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[$i_now].shortForecast"`), String))
-    is_day = let 
+                                                     `jq ".properties.periods[$i_now].shortForecast"`),
+                                            String))
+    is_day = let
         str = read(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[$i_now].isDaytime"`), String)
+                            `jq ".properties.periods[$i_now].isDaytime"`), String)
         chomp(str) == "true"
     end
     if is_day
         @info "IS DAY!"
-        return contains(current_short_forecast, "sun") ? (@info "SUN"; DOTS_SUN) : (@info "CLOUD"; DOTS_CLOUD)
+        return contains(current_short_forecast, "sun") ? (@info "SUN"; DOTS_SUN) :
+               (@info "CLOUD"; DOTS_CLOUD)
     end
     @info "IS NOT DAY!"
-    return contains(current_short_forecast, "mostly cloudy") ? (@info "CLOUD"; DOTS_CLOUD) : (@info "NIGHT"; DOTS_NIGHT)
+    return contains(current_short_forecast, "mostly cloudy") ? (@info "CLOUD"; DOTS_CLOUD) :
+           (@info "NIGHT"; DOTS_NIGHT)
 end
 
 # Return short form, long form
-format_weather(sink, ::Missing, ::Missing) = (text_to_bytes(sink, "-"), text_to_bytes(sink, "Unable to fetch weather"))
+function format_weather(sink, ::Missing, ::Missing)
+    return (text_to_bytes(sink, "-"), text_to_bytes(sink, "Unable to fetch weather"))
+end
 
 _hour_from_time(str) = last(split(string(str), 'T'))[1:2]
 
@@ -101,33 +107,36 @@ function format_weather(sink, forecast, hourly_forecast)
     @info "Formatting short output..."
     weather_icon = _get_weather_icon_from_hourly(hourly_forecast_file)
     now_hour = _hour_from_time(now())
-    i_now = let 
+    i_now = let
         now_str = "T$now_hour"
         strs = readlines(pipeline(`cat $hourly_forecast_file`,
-            `jq ".properties.periods[].startTime"`))
+                                  `jq ".properties.periods[].startTime"`))
         i = findfirst(contains(now_str), strs)
         # We need the *json* index, which is 0-indexed 
         i - 1
     end
-    str = read(pipeline(`cat $hourly_forecast_file`, `jq ".properties.periods[$i_now].temperature"`), String)
+    str = read(pipeline(`cat $hourly_forecast_file`,
+                        `jq ".properties.periods[$i_now].temperature"`), String)
     temp = chomp(str)
     short_str = vcat(text_to_bytes(sink, string("   ", temp, "°")), weather_icon)
-    
+
     @info "Formatting scrolling output..."
-    short_forecast = let 
+    short_forecast = let
         # Basic forecast is split into periods, where the current hour is first
-        str = read(pipeline(`cat $hourly_forecast_file`, `jq ".properties.periods[$i_now].shortForecast"`), String)
+        str = read(pipeline(`cat $hourly_forecast_file`,
+                            `jq ".properties.periods[$i_now].shortForecast"`), String)
         replace(chomp(str), "\"" => "")
     end
-    next_forecast = let 
+    next_forecast = let
         hour = parse(Int, now_hour)
-        strs = readlines(pipeline(`cat $forecast_file`, `jq ".properties.periods[].endTime"`))
+        strs = readlines(pipeline(`cat $forecast_file`,
+                                  `jq ".properties.periods[].endTime"`))
         hours = map(s -> parse(Int, _hour_from_time(s)), strs)
         for i in 2:length(hours)
             while hours[i] < hours[i - 1]
                 hours[i] += 24
             end
-        end 
+        end
         i_now = findfirst(>(hour), hours)
         if abs(hours[i_now] - hour) < 1
             # If we're near the end of the current time block, look ahead one block
@@ -135,8 +144,10 @@ function format_weather(sink, forecast, hourly_forecast)
         end
         i_now -= 1 # b/c json
 
-        name = read(pipeline(`cat $forecast_file`, `jq ".properties.periods[$i_now].name"`), String)
-        content = read(pipeline(`cat $forecast_file`, `jq ".properties.periods[$i_now].shortForecast"`), String)
+        name = read(pipeline(`cat $forecast_file`, `jq ".properties.periods[$i_now].name"`),
+                    String)
+        content = read(pipeline(`cat $forecast_file`,
+                                `jq ".properties.periods[$i_now].shortForecast"`), String)
         replace(chomp(name) * ": " * chomp(content), "\"" => "")
     end
 
@@ -147,7 +158,7 @@ end
 
 function update_with_current_weather(sink; scroll_long_msg=true, location)
     @info "Updating!" now()
-    
+
     # Get weather
     forecast_result, hourly_result = get_weather(; location)
     bytes_static, bytes_scroll = format_weather(sink, forecast_result, hourly_result)
@@ -180,7 +191,6 @@ function update_with_current_date(sink)
     return nothing
 end
 
-
 #####
 ##### Main entrypoint
 #####
@@ -189,10 +199,14 @@ function update_every_half_hour(dots_sink, digits_sink; location)
     @info "Running per-half-hour update"
     last_set = now()
     while true
-        if Dates.minute(now()) % 30 == 0 && round(now() - last_set, Minute) > Minute(4)
-            last_set = now()
-            update_with_current_weather(dots_sink; scroll_long_msg=false, location)
-            update_with_current_date(digits_sink)
+        if Dates.minute(now()) % 30 == 0 && round(now() - last_set, Minute) > Minute(2)
+            try
+                update_with_current_weather(dots_sink; scroll_long_msg=false, location)
+                update_with_current_date(digits_sink)
+                last_set = now()
+            catch e
+                @warn "Encountered an error while attempting to update: $(e.msg)"
+            end
         end
         sleep(0.2) # half second polling
     end
